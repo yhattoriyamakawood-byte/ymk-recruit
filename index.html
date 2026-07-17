@@ -287,7 +287,7 @@ html,body{height:100%;overflow:hidden}
         <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定承諾</option><option>内定辞退</option><option>内定承諾面談</option><option>フォローイベント</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
     </div>
     <div class="f-row" id="sch-custom-row" style="display:none"><label class="f-lbl">内容（自由入力）</label><input class="f-inp" id="sch-title-custom"></div>
-    <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
+    <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date" onchange="if(this.value){const cb=document.getElementById('sch-scheduling');if(cb.checked){cb.checked=false;const t=document.getElementById('sch-time');if(!t.value)t.value='10:00'}}"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
     <div class="f-row"><label class="f-lbl">場所</label>
       <div class="loc-toggle" id="sch-loc-toggle">
         <div class="loc-opt on" onclick="setSchLoc('対面',this)">対面</div>
@@ -539,7 +539,7 @@ async function loadAllFromSupabase(){
   const keys=['students','events','medias','media_costs','years','staff','company_staff','gcal_accounts']
   const vals=await Promise.all(keys.map(k=>_sbGet(k).catch(()=>null)))
   const [students,events,medias,media_costs,years,staff,company_staff,gcal_accounts]=vals
-  if(students&&students.length){STUDENTS.length=0;students.forEach(s=>{if(!s.entryDate&&s.lc)s.entryDate=s.lc;STUDENTS.push(s)})}
+  if(students&&students.length){STUDENTS.length=0;students.forEach(s=>{if(!s.entryDate&&s.lc)s.entryDate=s.lc;STUDENTS.push(s)});students.forEach(s=>{if(s.media&&!MEDIAS.includes(s.media))MEDIAS.push(s.media)})}
   if(events&&events.length){EVENTS.length=0;events.forEach(e=>EVENTS.push(e))}
   if(medias&&medias.length){MEDIAS.length=0;medias.forEach(m=>MEDIAS.push(m))}
   if(media_costs&&Object.keys(media_costs).length){Object.keys(MEDIA_COSTS).forEach(k=>delete MEDIA_COSTS[k]);Object.assign(MEDIA_COSTS,media_costs)}
@@ -753,6 +753,7 @@ function submitStudent(){
   const vals={ln,fn,lk:document.getElementById('f-lk').value,fk:document.getElementById('f-fk').value,gender:document.getElementById('f-gender').value,yr:parseInt(document.getElementById('f-yr').value),uni:document.getElementById('f-uni').value,fac:document.getElementById('f-fac').value,dept:document.getElementById('f-dept').value,home:document.getElementById('f-home').value,city:document.getElementById('f-city').value,addr:document.getElementById('f-addr').value,email:document.getElementById('f-email').value,phone:document.getElementById('f-phone').value,media:document.getElementById('f-media').value,user:document.getElementById('f-user').value,rank:document.getElementById('f-rank').value,memo:document.getElementById('f-memo').value,jobTags:[...document.querySelectorAll('#tg-job .tc.on')].map(t=>t.dataset.label),axisTags:[...document.querySelectorAll('#tg-axis .tc.on')].map(t=>t.dataset.label),attrTags:[...document.querySelectorAll('#tg-attr .tc.on')].map(t=>t.dataset.label)}
   if(isEdit){const s=STUDENTS.find(x=>x.id===editStuId);if(s)Object.assign(s,vals);toast('学生情報を更新しました')}
   else{const todayISO=new Date().toISOString().slice(0,10);STUDENTS.push({id:nextId(STUDENTS),...vals,stage:'エントリー',lc:todayISO,entryDate:todayISO,scheduling:false,sch:null,hist:[{d:todayMD(),s:'エントリー',cur:true}]});toast(`${ln} ${fn} さんを追加しました`)}
+  ensureMedia(vals.media)
   closeModal('ov-student');syncPipelineEvents();renderStu();renderDash();const cur=getCur();if(cur==='pipe'){renderKB();if(selPipeId===editStuId)selPipeStu(editStuId)}if(cur==='evnt')renderEvList();if(selPipeId&&selPipeId===(isEdit?editStuId:STUDENTS[STUDENTS.length-1]?.id))selPipeStu(selPipeId)
 }
 // ===== Googleカレンダー連携 =====
@@ -897,8 +898,8 @@ function openScheduleModal(stuId,e){
   document.getElementById('sch-scheduling').checked=isSchFlag
   document.getElementById('sch-date').value=isSchFlag?'':(s.sch?.date||new Date().toISOString().slice(0,10))
   document.getElementById('sch-time').value=isSchFlag?'':(s.sch?.time||'10:00')
-  document.getElementById('sch-date').disabled=isSchFlag
-  document.getElementById('sch-time').disabled=isSchFlag
+  document.getElementById('sch-date').disabled=false
+  document.getElementById('sch-time').disabled=false
   document.getElementById('sch-loc-detail').value=s.sch?.locDetail||''
   document.getElementById('sch-clear-btn').style.display=s.sch?'':'none'
   schLocType=s.sch?.loc||'対面';document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))
@@ -906,13 +907,10 @@ function openScheduleModal(stuId,e){
 }
 
 function toggleSchFields(cb){
-  const disabled=cb.checked
   const dateEl=document.getElementById('sch-date')
   const timeEl=document.getElementById('sch-time')
-  dateEl.disabled=disabled
-  timeEl.disabled=disabled
-  if(disabled){dateEl.value='';timeEl.value=''}
-  else{dateEl.value=new Date().toISOString().slice(0,10);timeEl.value='10:00'}
+  if(cb.checked){dateEl.value='';timeEl.value=''}
+  else{if(!dateEl.value)dateEl.value=new Date().toISOString().slice(0,10);if(!timeEl.value)timeEl.value='10:00'}
 }
 function saveSchedule(){
   pushUndo()
@@ -967,6 +965,7 @@ function buildStaffDD(){
   const fu=document.getElementById('f-user');if(fu){const prev=fu.value;fu.innerHTML=opts;if(STAFF.includes(prev))fu.value=prev;else fu.value=STAFF[0]||''}
   renderStaffMgr()
 }
+function ensureMedia(m){if(m&&m!=='不明'&&!MEDIAS.includes(m)){MEDIAS.push(m);buildMediaDDs();scheduleSave()}}
 function renderStaffMgr(){
   const el=document.getElementById('staff-mgr-tags');if(!el)return
   el.innerHTML=STAFF.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--bd);border-radius:4px;font-size:11px;background:var(--bg)">${s}<button onclick="removeStaff('${s}')" style="border:none;background:none;cursor:pointer;color:#bbb;font-size:12px;padding:0;line-height:1" onmouseover="this.style.color='#e74c3c'" onmouseout="this.style.color='#bbb'">×</button></span>`).join('')
@@ -1910,6 +1909,7 @@ function doImport(){
     const hist=stage==='エントリー'?[{d:todayMD(),s:'エントリー',cur:true}]:[{d:todayMD(),s:'エントリー'},{d:todayMD(),s:stage,cur:true}]
     const todayISO=new Date().toISOString().slice(0,10)
     STUDENTS.push({id:nextId(STUDENTS),ln:r.ln,fn:r.fn,lk:r.lk||'',fk:r.fk||'',gender:r.gender||'男性',uni:r.uni||'',fac:r.fac||'',dept:r.dept||'',yr:r.yr,home:r.home||'',city:'',email:r.email||'',phone:r.phone||'—',media:r.media,stage,rank:r.rank||'B',user:'—',jobTags:[],axisTags:[],attrTags:[],memo:r.memo||'',lc:r.lc||todayISO,entryDate:todayISO,scheduling:false,sch:null,hist})
+    ensureMedia(r.media)
     added++
   })
   closeModal('ov-import')
