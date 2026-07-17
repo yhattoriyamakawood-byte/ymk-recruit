@@ -118,7 +118,7 @@ html,body{height:100%;overflow:hidden}
 .kb-col.dov{outline:2px solid #4a90d9;outline-offset:-2px;background:#eef6ff}
 .kb-col.offer-col.dov{outline-color:#3b6d11;background:#e0f5d0}
 .kb-col.exit-col.dov{outline-color:#a32d2d;background:#fce8e8}
-.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;border-bottom:1px solid var(--bd);color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0}
+.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:4px;border-bottom:1px solid var(--bd);color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0;white-space:nowrap;overflow:hidden}
 .kb-col.offer-col .kb-hdr{background:#eaf3de;color:#27500a;border-color:#c0dd97}
 .kb-col.follow-col .kb-hdr{background:#faeeda;color:#633806;border-color:#fac775}
 .kb-col.exit-col .kb-hdr{background:#fdf0f0;color:#a32d2d;border-color:#f0cece}
@@ -622,7 +622,7 @@ const KB_FOLLOW=[{id:'follow',lbl:'フォローイベント'}]
 const KB_EXIT=[{id:'fail',lbl:'不合格'},{id:'decline',lbl:'辞退'}]
 const ALL_COLS=[...KB_MAIN,...KB_OFFER,...KB_FOLLOW,...KB_EXIT]
 const KBS={};ALL_COLS.forEach(c=>KBS[c.id]=c.lbl)
-const S2KB={};ALL_COLS.forEach(c=>S2KB[c.lbl]=c.id);S2KB['インターンシップ']='intern'
+const S2KB={};ALL_COLS.forEach(c=>S2KB[c.lbl]=c.id);S2KB['インターンシップ']='intern';S2KB['インターン']='intern'
 const SCH_OPTS=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','内定承諾面談','フォローイベント','不合格','辞退','会社説明会']
 
 let STUDENTS=[]
@@ -1209,7 +1209,7 @@ function renderKB(){
   })
 
   const SECTIONS=[
-    {lbl:'選考フロー',cls:'main',cols:KB_MAIN},
+    {lbl:'選考ステップ',cls:'main',cols:KB_MAIN},
     {lbl:'内定',cls:'offer',cols:KB_OFFER},
     {lbl:'フォロー',cls:'follow',cols:KB_FOLLOW},
     {lbl:'離脱',cls:'exit',cols:KB_EXIT},
