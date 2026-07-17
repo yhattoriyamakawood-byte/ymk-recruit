@@ -388,6 +388,11 @@ html,body{height:100%;overflow:hidden}
           <span>横スクロールで全ステージ表示</span>
         </div>
         <div style="flex:1"></div>
+        <div style="position:relative;display:flex;align-items:center">
+          <i class="ti ti-search" style="position:absolute;left:8px;font-size:13px;color:#aaa;pointer-events:none"></i>
+          <input id="kb-search" type="text" placeholder="学生を検索…" oninput="kbQuery=this.value;renderKB()" style="height:27px;padding:0 28px 0 28px;font-size:12px;border:.5px solid var(--bd);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;width:160px">
+          <button id="kb-search-clr" onclick="kbQuery='';document.getElementById('kb-search').value='';renderKB()" style="display:none;position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:14px;line-height:1;padding:0">×</button>
+        </div>
         <button class="btn dk" onclick="openStuModal(null)"><i class="ti ti-plus"></i>学生追加</button>
       </div>
       <div style="display:flex;flex:1;overflow:hidden;min-height:0">
@@ -661,7 +666,7 @@ let MEDIAS=[]
 let COMPANY_STAFF=[]
 let STAFF=[]
 let MEDIA_COSTS={} // {media: [{label:'プラン名',amount:0}, ...]}
-let remExpanded=false,evExpanded=false,schStuId=null,editStuId=null,schLocType='対面',evLocType='対面',_remCache=[],selPipeId=null,fazeMediaSel='全体'
+let remExpanded=false,evExpanded=false,schStuId=null,editStuId=null,schLocType='対面',evLocType='対面',_remCache=[],selPipeId=null,fazeMediaSel='全体',kbQuery=''
 const PDF_STORE={} // stuId -> {data, name, text, parsed}
 let GCAL_ACCOUNTS=[]
 let _gcalPending=null // {url} waiting for account selection
@@ -1193,9 +1198,12 @@ function renderKB(){
   const wrap=document.getElementById('kb-wrap');wrap.innerHTML=''
 
   /* Bucket students into columns */
+  const _kbq=kbQuery.trim().toLowerCase()
+  const clrBtn=document.getElementById('kb-search-clr');if(clrBtn)clrBtn.style.display=_kbq?'':'none'
   const kbData={};ALL_COLS.forEach(c=>kbData[c.id]=[])
   STUDENTS.forEach(s=>{
     if(!yrMatch(s))return
+    if(_kbq){const nm=(s.ln+s.fn+s.lk+s.fk).toLowerCase();if(!nm.includes(_kbq))return}
     const k=S2KB[s.stage];if(k)kbData[k].push(s)
   })
   /* Sort each column by date ascending; undated → bottom */
