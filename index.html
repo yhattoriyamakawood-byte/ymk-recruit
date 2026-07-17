@@ -385,14 +385,13 @@ html,body{height:100%;overflow:hidden}
         <div style="font-size:11px;color:#999;display:flex;gap:10px;align-items:center">
           <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:6px;height:14px;border-left:3px solid #e67e22;"></span>日程調整中</span>
           <span style="color:var(--bd2)">｜</span>
-          <span>横スクロールで全ステージ表示</span>
+          <div style="position:relative;display:flex;align-items:center">
+            <i class="ti ti-search" style="position:absolute;left:8px;font-size:13px;color:#aaa;pointer-events:none"></i>
+            <input id="kb-search" type="text" placeholder="学生を検索…" oninput="kbQuery=this.value;renderKB()" style="height:27px;padding:0 28px 0 28px;font-size:12px;border:.5px solid var(--bd);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;width:160px">
+            <button id="kb-search-clr" onclick="kbQuery='';document.getElementById('kb-search').value='';renderKB()" style="display:none;position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:14px;line-height:1;padding:0">×</button>
+          </div>
         </div>
         <div style="flex:1"></div>
-        <div style="position:relative;display:flex;align-items:center">
-          <i class="ti ti-search" style="position:absolute;left:8px;font-size:13px;color:#aaa;pointer-events:none"></i>
-          <input id="kb-search" type="text" placeholder="学生を検索…" oninput="kbQuery=this.value;renderKB()" style="height:27px;padding:0 28px 0 28px;font-size:12px;border:.5px solid var(--bd);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;width:160px">
-          <button id="kb-search-clr" onclick="kbQuery='';document.getElementById('kb-search').value='';renderKB()" style="display:none;position:absolute;right:6px;border:none;background:none;cursor:pointer;color:#aaa;font-size:14px;line-height:1;padding:0">×</button>
-        </div>
         <button class="btn dk" onclick="openStuModal(null)"><i class="ti ti-plus"></i>学生追加</button>
       </div>
       <div style="display:flex;flex:1;overflow:hidden;min-height:0">
@@ -1202,7 +1201,7 @@ function renderKB(){
   const kbData={};ALL_COLS.forEach(c=>kbData[c.id]=[])
   STUDENTS.forEach(s=>{
     if(!yrMatch(s))return
-    if(_kbq){const nm=(s.ln+s.fn+s.lk+s.fk).toLowerCase();if(!nm.includes(_kbq))return}
+    if(_kbq){const nm=[(s.ln||''),(s.fn||''),(s.lk||''),(s.fk||''),(s.uni||'')].join(' ').toLowerCase();if(!_kbq.split(/\s+/).every(t=>nm.includes(t)))return}
     const k=S2KB[s.stage];if(k)kbData[k].push(s)
   })
   /* Sort each column by date ascending; undated → bottom */
