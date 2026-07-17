@@ -708,7 +708,7 @@ document.addEventListener('keydown',function(e){
 const MAX_SHOW_EV=3,MAX_SHOW_REM=6
 
 function dSince(d){if(!d)return 9999;return Math.floor((Date.now()-new Date(d).getTime())/86400000)}
-function dUntil(d){if(!d)return 9999;return Math.ceil((new Date(d).getTime()-Date.now())/86400000)}
+function dUntil(d){if(!d)return 9999;const t=new Date();t.setHours(0,0,0,0);const e=new Date(d);e.setHours(0,0,0,0);return Math.round((e-t)/86400000)}
 function fmtDateW(iso){if(!iso)return'';const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()}(${WDAYS[d.getDay()]})`}
 function fmtMDW(iso){if(!iso)return{m:'',d:'',w:''};const d=new Date(iso);return{m:`${d.getMonth()+1}月`,d:d.getDate(),w:WDAYS[d.getDay()]}}
 function todayMD(){const d=new Date();return`${d.getMonth()+1}/${d.getDate()}`}
@@ -1034,12 +1034,13 @@ function genReminders(){
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
       if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'}})
       if(!p.reminded&&du>=0&&du<=3)reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
-      if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title))reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'}})
+      if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'}})
+      if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title)&&p.attended!=='no')reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'}})
     })
   })
   STUDENTS.forEach(s=>{if(!yrMatch(s))return;if(['辞退','不合格','内定辞退'].includes(s.stage))return
     if(!s.lc)reminders.push({name:`${s.ln} ${s.fn}`,text:'連絡記録なし — 初回フォロー',when:'—',urgent:false,stuId:s.id})
-    else{const ds=dSince(s.lc);if(s.scheduling&&ds>=1)reminders.push({name:`${s.ln} ${s.fn}`,text:`日程調整中 — ${ds}日連絡なし`,when:`${ds}日前`,urgent:ds>=1,stuId:s.id});else if(!s.scheduling&&ds>=12)reminders.push({name:`${s.ln} ${s.fn}`,text:`最終連絡から${ds}日経過`,when:`${ds}日前`,urgent:ds>=12,stuId:s.id})}
+    else{const ds=dSince(s.lc);if(s.scheduling&&ds>=1)reminders.push({name:`${s.ln} ${s.fn}`,text:`日程調整中 — ${ds}日連絡なし`,when:`${ds}日前`,urgent:ds>=1,stuId:s.id});else if(!s.scheduling&&ds>=10)reminders.push({name:`${s.ln} ${s.fn}`,text:`最終連絡から${ds}日経過`,when:`${ds}日前`,urgent:ds>=10,stuId:s.id})}
   })
   return reminders.sort((a,b)=>b.urgent-a.urgent)
 }
