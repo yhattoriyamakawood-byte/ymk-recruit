@@ -1201,7 +1201,7 @@ function renderKB(){
   const kbData={};ALL_COLS.forEach(c=>kbData[c.id]=[])
   STUDENTS.forEach(s=>{
     if(!yrMatch(s))return
-    if(_kbq){const nm=[(s.ln||''),(s.fn||''),(s.lk||''),(s.fk||''),(s.uni||'')].join(' ').toLowerCase();if(!_kbq.split(/\s+/).every(t=>nm.includes(t)))return}
+    if(_kbq){const _nm1=[(s.ln||''),(s.fn||''),(s.lk||''),(s.fk||''),(s.uni||'')].join(' ').toLowerCase();const _nm2=[(s.ln||''),(s.fn||''),(s.lk||''),(s.fk||'')].join('').toLowerCase();if(!_kbq.split(/\s+/).every(t=>_nm1.includes(t)||_nm2.includes(t)))return}
     const k=S2KB[s.stage];if(k)kbData[k].push(s)
   })
   /* Sort each column by date ascending; undated → bottom */
