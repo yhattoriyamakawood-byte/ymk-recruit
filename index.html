@@ -1307,7 +1307,20 @@ function renderKB(){
   wrap.appendChild(grid)
 }
 
-function togglePaxStatus(evId,pi,field,val,e){e.stopPropagation();const ev=EVENTS.find(e=>e.id===evId);if(!ev)return;if(field==='result'||field==='attended'){ev.pax[pi][field]=ev.pax[pi][field]===val?null:val}else{ev.pax[pi][field]=!ev.pax[pi][field]};renderEvList();renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)}
+function togglePaxStatus(evId,pi,field,val,e){
+  e.stopPropagation();const ev=EVENTS.find(e=>e.id===evId);if(!ev)return
+  pushUndo()
+  if(field==='result'||field==='attended'){ev.pax[pi][field]=ev.pax[pi][field]===val?null:val}else{ev.pax[pi][field]=!ev.pax[pi][field]}
+  if(field==='attended'&&ev.pax[pi].attended==='no'){
+    const stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId)
+    if(stu&&!['辞退','不合格','内定辞退'].includes(stu.stage)){
+      stu.stage='辞退';stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:'辞退',cur:true});stu.sch=null;stu.scheduling=false
+      toast(`${stu.ln} ${stu.fn} → 辞退`)
+    }
+  }
+  scheduleSave();renderEvList();renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
+  if(getCur()==='pipe')renderKB()
+}
 function deleteEvent(evId,e){
   if(e)e.stopPropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
