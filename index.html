@@ -1482,16 +1482,18 @@ function renderFaze(){
       const evList=EVENTS.filter(ev=>ev.title===phase)
       const reservedIds=new Set()
       const attendedIds=new Set()
+      const pendingIds=new Set()
       evList.forEach(ev=>{
         ev.pax.forEach(p=>{
           if(!targetIds.has(p.stuId))return
           reservedIds.add(p.stuId)
           if(p.attended==='yes')attendedIds.add(p.stuId)
+          if(p.attended!=='yes'&&p.attended!=='no')pendingIds.add(p.stuId)
         })
       })
       const reserved=reservedIds.size
       const participated=attendedIds.size
-      const notDone=reserved-participated
+      const notDone=pendingIds.size
       const rate=reserved>0?Math.round(participated/reserved*100):0
       return{phase,reserved,participated,notDone,rate}
     })
