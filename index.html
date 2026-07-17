@@ -282,8 +282,8 @@ html,body{height:100%;overflow:hidden}
     <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date" onchange="if(this.value){const cb=document.getElementById('sch-scheduling');if(cb.checked){cb.checked=false;const t=document.getElementById('sch-time');if(!t.value)t.value='10:00'}}"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
     <div class="f-row"><label class="f-lbl">場所</label>
       <div class="loc-toggle" id="sch-loc-toggle">
-        <div class="loc-opt on" onclick="setSchLoc('対面',this)">対面</div>
-        <div class="loc-opt" onclick="setSchLoc('WEB',this)">WEB</div>
+        <div class="loc-opt" onclick="setSchLoc('対面',this)">対面</div>
+        <div class="loc-opt on" onclick="setSchLoc('WEB',this)">WEB</div>
       </div>
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="sch-loc-detail"></div>
@@ -301,7 +301,7 @@ html,body{height:100%;overflow:hidden}
     <div id="ev-type-row" class="f-row"><label class="f-lbl">種別</label><select class="f-sel" id="f-ev-type"><option>説明会</option><option>面談</option><option>インターン</option><option>座談会</option><option>懇親会</option></select></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">開催日</label><input class="f-inp" type="date" id="f-ev-date"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="f-ev-time" value="14:00"></div></div>
     <div class="f-row"><label class="f-lbl">場所</label>
-      <div class="loc-toggle" id="ev-loc-toggle"><div class="loc-opt on" onclick="setEvLoc('対面',this)">対面</div><div class="loc-opt" onclick="setEvLoc('WEB',this)">WEB</div></div>
+      <div class="loc-toggle" id="ev-loc-toggle"><div class="loc-opt" onclick="setEvLoc('対面',this)">対面</div><div class="loc-opt on" onclick="setEvLoc('WEB',this)">WEB</div></div>
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="f-ev-loc-detail"></div>
     <div class="f-row" style="margin-top:6px"><label class="f-lbl">企業側参加者</label>
@@ -657,7 +657,7 @@ let MEDIAS=[]
 let COMPANY_STAFF=[]
 let STAFF=[]
 let MEDIA_COSTS={} // {media: [{label:'プラン名',amount:0}, ...]}
-let remExpanded=false,evExpanded=false,schStuId=null,editStuId=null,schLocType='対面',evLocType='対面',_remCache=[],selPipeId=null,fazeMediaSel='全体',kbQuery=''
+let remExpanded=false,evExpanded=false,schStuId=null,editStuId=null,schLocType='WEB',evLocType='WEB',_remCache=[],selPipeId=null,fazeMediaSel='全体',kbQuery=''
 const PDF_STORE={} // stuId -> {data, name, text, parsed}
 let GCAL_ACCOUNTS=[]
 let _gcalPending=null // {url} waiting for account selection
@@ -800,7 +800,7 @@ function openEvModal(evId){
   document.getElementById('ev-edit-title-row').style.display=ev?'':'none'
   if(ev)document.getElementById('ev-edit-title-display').textContent=ev.title
   // fill fields
-  const loc=ev?ev.loc:'対面'
+  const loc=ev?ev.loc:'WEB'
   evLocType=loc
   document.querySelectorAll('#ev-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===loc))
   document.getElementById('f-ev-date').value=ev?ev.date:''
@@ -893,7 +893,7 @@ function openScheduleModal(stuId,e){
   document.getElementById('sch-time').disabled=false
   document.getElementById('sch-loc-detail').value=s.sch?.locDetail||''
   document.getElementById('sch-clear-btn').style.display=s.sch?'':'none'
-  schLocType=s.sch?.loc||'対面';document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))
+  schLocType=s.sch?.loc||'WEB';document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))
   document.getElementById('ov-schedule').classList.add('show')
 }
 
@@ -937,7 +937,7 @@ function syncPipelineEvents(){
     let ev=EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time)
     if(!ev){
       const typeMap={'個別面談':'面談','インターンシップ':'インターン','グループワーク':'面談','RC面談①':'面談','役員面接':'面談','RC面談②':'面談','最終面接':'面談','フォローイベント':'懇親会'}
-      ev={id:nextId(EVENTS),title:s.sch.title,type:typeMap[s.sch.title]||'面談',date:s.sch.date,time:s.sch.time,loc:s.sch.loc||'対面',locDetail:s.sch.locDetail||'',pax:[],_synced:true}
+      ev={id:nextId(EVENTS),title:s.sch.title,type:typeMap[s.sch.title]||'面談',date:s.sch.date,time:s.sch.time,loc:s.sch.loc||'WEB',locDetail:s.sch.locDetail||'',pax:[],_synced:true}
       EVENTS.push(ev)
     }
     if(!ev.pax.find(p=>p.stuId===s.id)){
@@ -1319,6 +1319,14 @@ function renderKB(){
   wrap.appendChild(outer)
 }
 
+function removePaxStu(evId,stuId,e){
+  e.stopPropagation()
+  const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
+  pushUndo()
+  ev.pax=ev.pax.filter(p=>p.stuId!==stuId)
+  scheduleSave();renderEvList()
+  toast('イベントから削除しました')
+}
 function togglePaxStatus(evId,pi,field,val,e){
   e.stopPropagation();const ev=EVENTS.find(e=>e.id===evId);if(!ev)return
   pushUndo()
@@ -1393,7 +1401,7 @@ function renderEvList(){
       if(!isPastSection&&du<=3&&filteredPax.some(p=>!p.reminded))badges.push({label:'リマインド未送',bg:'#faeeda',color:'#633806',bd:'#fac775'})
       if(isPastSection&&filteredPax.some(p=>p.attended!=='yes'&&p.attended!=='no'))badges.push({label:'出欠未確認',bg:'#fff3e0',color:'#e67e22',bd:'#f5c07a'})
       const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title)
-      if(isPastSection&&hasResult&&filteredPax.some(p=>p.result===null))badges.push({label:'合否未通知',bg:'#fdf0f0',color:'#a32d2d',bd:'#f0cece'})
+      if(isPastSection&&hasResult&&filteredPax.some(p=>p.result===null&&p.attended!=='no'))badges.push({label:'合否未通知',bg:'#fdf0f0',color:'#a32d2d',bd:'#f0cece'})
       const needsAlert=badges.length>0
       const tc=evTypeColor(ev.title)
       const alertStyle=needsAlert
@@ -1409,7 +1417,7 @@ function renderEvList(){
         const stu=STUDENTS.find(s=>s.id===p.stuId)
         if(!stu)return''
         const resultCell=hasResult?`<td><div style="display:flex;gap:4px"><button class="st-btn ${p.result==='pass'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'result','pass',event)">通過</button><button class="st-btn ${p.result==='fail'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'result','fail',event)">不合格</button></div></td>`:'';
-        return`<tr><td><div style="display:flex;gap:4px"><button class="st-btn ${p.attended==='yes'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','yes',event)">参加</button><button class="st-btn ${p.attended==='no'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','no',event)">不参加</button></div></td><td style="font-weight:500;white-space:nowrap">${stu.ln} ${stu.fn}<br><button style="font-size:9px;margin-top:2px;padding:0 5px;height:16px;border:1px solid #ddd;border-radius:3px;background:#fff;cursor:pointer;color:#555" onclick="event.stopPropagation();showStuOverlay(${stu.id})">詳細</button></td><td>${stu.gender}</td><td style="white-space:nowrap;text-align:center">${String(stu.yr).slice(-2)}卒</td><td style="white-space:nowrap">${stu.uni}<br><span style="font-size:10px;color:#999">${stu.fac}・${stu.dept}</span></td><td>${stu.phone}</td><td><span class="${mediaCls(stu.media)}">${stu.media}</span></td><td><button class="st-btn ${p.notified?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'notified',true,event)">${p.notified?'✓ 送済':'未送'}</button></td><td><button class="st-btn ${p.reminded?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'reminded',true,event)">${p.reminded?'✓ 送済':'未送'}</button></td>${resultCell}</tr>`
+        return`<tr><td><div style="display:flex;gap:4px"><button class="st-btn ${p.attended==='yes'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','yes',event)">参加</button><button class="st-btn ${p.attended==='no'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','no',event)">不参加</button></div></td><td style="font-weight:500;white-space:nowrap">${stu.ln} ${stu.fn}<br><button style="font-size:9px;margin-top:2px;padding:0 5px;height:16px;border:1px solid #ddd;border-radius:3px;background:#fff;cursor:pointer;color:#555" onclick="event.stopPropagation();showStuOverlay(${stu.id})">詳細</button></td><td>${stu.gender}</td><td style="white-space:nowrap;text-align:center">${String(stu.yr).slice(-2)}卒</td><td style="white-space:nowrap">${stu.uni}<br><span style="font-size:10px;color:#999">${stu.fac}・${stu.dept}</span></td><td>${stu.phone}</td><td><span class="${mediaCls(stu.media)}">${stu.media}</span></td><td><button class="st-btn ${p.notified?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'notified',true,event)">${p.notified?'✓ 送済':'未送'}</button></td><td><button class="st-btn ${p.reminded?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'reminded',true,event)">${p.reminded?'✓ 送済':'未送'}</button></td>${resultCell}<td><button onclick="removePaxStu(${ev.id},${p.stuId},event)" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:15px;line-height:1;padding:2px 4px" title="イベントから削除">×</button></td></tr>`
       }).join('')
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
       const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto">${paxBody}</div>`:''
