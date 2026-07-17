@@ -1030,7 +1030,7 @@ function toggleMore(type){if(type==='rem')remExpanded=!remExpanded;else evExpand
 
 function genReminders(){
   const reminders=[];const today=new Date()
-  EVENTS.forEach(ev=>{const evDate=new Date(ev.date);const du=Math.ceil((evDate-today)/86400000)
+  EVENTS.forEach(ev=>{const du=dUntil(ev.date)
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
       if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'}})
       if(!p.reminded&&du>=0&&du<=3)reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
