@@ -1180,7 +1180,7 @@ function selPipeStu(id){
   <div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">次回予定</div><button class="btn sm" onclick="openScheduleModal(${id})"><i class="ti ti-calendar-plus"></i>${hasSch?'変更':'設定'}</button></div>${schHTML}</div>
   <div class="dp-sec"><div class="dp-st green">評価・状態</div><div class="dp-row"><div class="dp-lbl">ランク</div><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></div><div class="dp-row"><div class="dp-lbl">ステージ</div><span class="stg ${stgClass(s.stage)}">${s.stage}</span></div><div class="dp-row"><div class="dp-lbl">最終連絡</div><div style="display:flex;align-items:center;gap:5px"><input type="date" class="lc-input" value="${s.lc||''}" onchange="updateLC(${id},this.value)">${s.lc?`<span style="font-size:10px;${lcStyle(s)}">${dSince(s.lc)===0?'今日':dSince(s.lc)+'日前'}</span>`:''}</div></div></div>
   <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni||'—'}</div></div><div class="dp-row"><div class="dp-lbl">学部</div><div>${s.fac||'—'}</div></div><div class="dp-row"><div class="dp-lbl">卒年</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;word-break:break-all">${s.email||'—'}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
-  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const seen=new Set();const manHist=s.hist.filter(h=>{if(seen.has(h.s))return false;seen.add(h.s);return true}).reverse();return manHist.map(h=>`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div></div>`).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
+  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const seen=new Set();const manHist=s.hist.filter(h=>{if(seen.has(h.s))return false;seen.add(h.s);return true}).reverse();return manHist.map(h=>{const matchEv=EVENTS.find(ev=>ev.title===h.s&&ev.pax.some(p=>p.stuId===s.id));const dateStr=matchEv?(matchEv.date||'').slice(5).replace('-','/'):h.d;return`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${dateStr}</div><div class="tl-s">${h.s}</div></div>`}).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><div class="memo">${s.memo||'（メモなし）'}</div></div>`
   renderKB()
 }
@@ -1368,6 +1368,19 @@ function declineStu(id,e){
   toast(`${s.ln} ${s.fn} → 「辞退」`)
 }
 function renderEvList(){
+  function evTypeColor(title){
+    const map={
+      '個別面談':{left:'#2c7be5',bg:'#eef5ff',text:'#1a4fa0'},
+      'インターンシップ':{left:'#22c55e',bg:'#f0fdf4',text:'#166534'},
+      'グループワーク':{left:'#a855f7',bg:'#faf5ff',text:'#6b21a8'},
+      'RC面談①':{left:'#f59e0b',bg:'#fffbeb',text:'#92400e'},
+      '役員面接':{left:'#ef4444',bg:'#fef2f2',text:'#991b1b'},
+      'RC面談②':{left:'#3b82f6',bg:'#eff6ff',text:'#1e40af'},
+      '最終面接':{left:'#16a34a',bg:'#f0fdf4',text:'#14532d'},
+      'フォローイベント':{left:'#f97316',bg:'#fff7ed',text:'#9a3412'},
+    };
+    return map[title]||{left:'#888',bg:'#f8f8f8',text:'#444'};
+  }
   function draw(){
     const todayStr=new Date().toISOString().slice(0,10)
     function buildEvCard(ev,isPastSection){
@@ -1382,8 +1395,10 @@ function renderEvList(){
       const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title)
       if(isPastSection&&hasResult&&filteredPax.some(p=>p.result===null))badges.push({label:'合否未通知',bg:'#fdf0f0',color:'#a32d2d',bd:'#f0cece'})
       const needsAlert=badges.length>0
-      const alertStyle=needsAlert?'border-left:3px solid #e67e22;':(isPastSection?'border-left:3px solid transparent;':'')
-      const cardBg=isPastSection?'background:#f8f8f8;':'';
+      const tc=evTypeColor(ev.title)
+      const borderColor=needsAlert?'#e67e22':tc.left
+      const alertStyle=`border-left:4px solid ${borderColor};`
+      const cardBg=isPastSection?'background:#f7f7f7;':`background:${tc.bg};`
       const alertBadge=badges.map(b=>`<span style="margin-left:6px;font-size:10px;background:${b.bg};color:${b.color};border:1px solid ${b.bd};border-radius:4px;padding:1px 5px">${b.label}</span>`).join('')
       const dateBadgeStyle=isPastSection?'opacity:0.5':''
       const paxRows=filteredPax.map(p=>{
@@ -1396,8 +1411,9 @@ function renderEvList(){
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
       const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto">${paxBody}</div>`:''
       const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="openGcalTask(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button></div>`
-      const titleColor=isPastSection?'color:#999;':'';
-      return`<div class="ev-card ${selEvId===ev.id?'on':''}" style="${alertStyle}${cardBg}"><div class="ev-card-hdr" onclick="toggleEvCard(${ev.id})"><div style="display:flex;align-items:center;gap:10px"><div class="date-badge" style="${dateBadgeStyle}"><div class="date-m">${dt.m}</div><div class="date-d">${dt.d}</div><div class="date-w">${dt.w}</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;${titleColor}">${ev.title}${alertBadge}</div><div style="display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#bbb">${ev.time}</span><span style="font-size:9px;color:#bbb">${ev.loc==='WEB'?'WEB':ev.locDetail||ev.loc}</span><span style="font-size:9px;color:#bbb">${filteredPax.length}名</span>${ev.staff&&ev.staff.length?'<span style="font-size:9px;background:#f0f0f0;color:#555;border-radius:8px;padding:1px 6px">'+ev.staff.join('・')+'</span>':''}</div></div>${gcalBtns}<i class="ti ti-chevron-${selEvId===ev.id?'up':'down'}" style="font-size:14px;color:#999;margin-left:6px"></i></div></div>${expandedSection}
+      const titleColor=isPastSection?'color:#999;':`color:${tc.text};`;
+      const dotColor=isPastSection?'#bbb':tc.left;
+      return`<div class="ev-card ${selEvId===ev.id?'on':''}" style="${alertStyle}${cardBg}"><div class="ev-card-hdr" onclick="toggleEvCard(${ev.id})"><div style="display:flex;align-items:center;gap:10px"><div class="date-badge" style="${dateBadgeStyle}"><div class="date-m">${dt.m}</div><div class="date-d">${dt.d}</div><div class="date-w">${dt.w}</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;${titleColor}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>${ev.title}${alertBadge}</div><div style="display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#bbb">${ev.time}</span><span style="font-size:9px;color:#bbb">${ev.loc==='WEB'?'WEB':ev.locDetail||ev.loc}</span><span style="font-size:9px;color:#bbb">${filteredPax.length}名</span>${ev.staff&&ev.staff.length?'<span style="font-size:9px;background:#f0f0f0;color:#555;border-radius:8px;padding:1px 6px">'+ev.staff.join('・')+'</span>':''}</div></div>${gcalBtns}<i class="ti ti-chevron-${selEvId===ev.id?'up':'down'}" style="font-size:14px;color:#999;margin-left:6px"></i></div></div>${expandedSection}
 </div>`
     }
     const upcoming=EVENTS.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(a.date)-new Date(b.date))
