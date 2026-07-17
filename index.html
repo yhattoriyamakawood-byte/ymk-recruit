@@ -1396,10 +1396,13 @@ function renderEvList(){
       if(isPastSection&&hasResult&&filteredPax.some(p=>p.result===null))badges.push({label:'合否未通知',bg:'#fdf0f0',color:'#a32d2d',bd:'#f0cece'})
       const needsAlert=badges.length>0
       const tc=evTypeColor(ev.title)
-      const borderColor=needsAlert?'#e67e22':tc.left
-      const alertStyle=`border-left:4px solid ${borderColor};`
-      const cardBg=isPastSection?'background:#f7f7f7;':`background:${tc.bg};`
-      const alertBadge=badges.map(b=>`<span style="margin-left:6px;font-size:10px;background:${b.bg};color:${b.color};border:1px solid ${b.bd};border-radius:4px;padding:1px 5px">${b.label}</span>`).join('')
+      const alertStyle=needsAlert
+        ?`border-left:4px solid ${tc.left};border-top:2px solid #e67e22;box-shadow:0 0 0 1px #fde68a inset;`
+        :`border-left:4px solid ${tc.left};`
+      const cardBg=needsAlert?'background:#fffbeb;':(isPastSection?'background:#f7f7f7;':`background:${tc.bg};`)
+      const alertBadge=needsAlert
+        ?`<span style="margin-left:8px;font-size:10px;background:#fff;border:1.5px solid #f59e0b;border-radius:10px;padding:2px 7px;color:#92400e;font-weight:600;display:inline-flex;align-items:center;gap:3px"><i class="ti ti-alert-triangle" style="font-size:11px;color:#e67e22"></i>${badges.map(b=>b.label).join('・')}</span>`
+        :''
       const dateBadgeStyle=isPastSection?'opacity:0.5':''
       const paxRows=filteredPax.map(p=>{
         const pi=ev.pax.indexOf(p)
