@@ -84,23 +84,11 @@ html,body{height:100%;overflow:hidden}
   overflow:auto;
   min-height:0;
 }
-.kb-grid-wrap{
-  display:grid;
-  grid-template-columns:repeat(14,116px);
-  grid-template-rows:auto 1fr;
-  column-gap:5px;
-  row-gap:0;
-  padding:8px;
-  height:100%;
-  width:max-content;
-  min-height:300px;
-}
+.kb-grid-wrap{height:100%}
 .kb-sec-lbl{
   font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
   padding:4px 8px;border-radius:5px 5px 0 0;
   display:flex;align-items:center;gap:5px;white-space:nowrap;
-  align-self:end;
-  position:sticky;top:0;z-index:3;
 }
 .kb-sec-lbl.main{background:#f2f2f2;color:#555;border:1px solid #e0e0e0;border-bottom:none}
 .kb-sec-lbl.offer{background:#eaf3de;color:#27500a;border:1px solid #c0dd97;border-bottom:none}
@@ -119,12 +107,15 @@ html,body{height:100%;overflow:hidden}
 .kb-col.dov{outline:2px solid #4a90d9;outline-offset:-2px;background:#eef6ff}
 .kb-col.offer-col.dov{outline-color:#3b6d11;background:#e0f5d0}
 .kb-col.exit-col.dov{outline-color:#a32d2d;background:#fce8e8}
-.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:4px;border-bottom:1px solid var(--bd);color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0;white-space:nowrap;overflow:hidden;position:sticky;top:26px;z-index:2;background:var(--bg2);}
+.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:4px;border:1px solid var(--bd);border-bottom:none;color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0;white-space:nowrap;overflow:hidden;background:var(--bg2);}
+.kb-hdr.offer-hdr{background:#eaf3de;color:#27500a;border-color:#c0dd97}
+.kb-hdr.follow-hdr{background:#faeeda;color:#633806;border-color:#fac775}
+.kb-hdr.exit-hdr{background:#fdf0f0;color:#a32d2d;border-color:#f0cece}
 .kb-col.offer-col .kb-hdr{background:#eaf3de;color:#27500a;border-color:#c0dd97}
 .kb-col.follow-col .kb-hdr{background:#faeeda;color:#633806;border-color:#fac775}
 .kb-col.exit-col .kb-hdr{background:#fdf0f0;color:#a32d2d;border-color:#f0cece}
 .kb-cnt{font-size:10px;background:var(--bg);border:.5px solid var(--bd);border-radius:7px;padding:0 5px}
-.kb-cards{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:4px;min-height:0}
+.kb-cards{padding:5px;display:flex;flex-direction:column;gap:4px}
 .kc{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:7px 9px;cursor:grab;user-select:none;flex-shrink:0}.kc.selected{border-color:#4a90d9;box-shadow:0 0 0 2px #d0e6fa}
 .kc.dragging{opacity:.4}
 .kc.scheduling{border-left:3px solid #e67e22;background:#fffbf0}
@@ -1189,7 +1180,7 @@ function selPipeStu(id){
   <div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">次回予定</div><button class="btn sm" onclick="openScheduleModal(${id})"><i class="ti ti-calendar-plus"></i>${hasSch?'変更':'設定'}</button></div>${schHTML}</div>
   <div class="dp-sec"><div class="dp-st green">評価・状態</div><div class="dp-row"><div class="dp-lbl">ランク</div><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></div><div class="dp-row"><div class="dp-lbl">ステージ</div><span class="stg ${stgClass(s.stage)}">${s.stage}</span></div><div class="dp-row"><div class="dp-lbl">最終連絡</div><div style="display:flex;align-items:center;gap:5px"><input type="date" class="lc-input" value="${s.lc||''}" onchange="updateLC(${id},this.value)">${s.lc?`<span style="font-size:10px;${lcStyle(s)}">${dSince(s.lc)===0?'今日':dSince(s.lc)+'日前'}</span>`:''}</div></div></div>
   <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni||'—'}</div></div><div class="dp-row"><div class="dp-lbl">学部</div><div>${s.fac||'—'}</div></div><div class="dp-row"><div class="dp-lbl">卒年</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;word-break:break-all">${s.email||'—'}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
-  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const manHist=s.hist.slice().reverse();return manHist.map(h=>`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div></div>`).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
+  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const seen=new Set();const manHist=s.hist.filter(h=>{if(seen.has(h.s))return false;seen.add(h.s);return true}).reverse();return manHist.map(h=>`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div></div>`).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><div class="memo">${s.memo||'（メモなし）'}</div></div>`
   renderKB()
 }
@@ -1221,35 +1212,57 @@ function renderKB(){
     {lbl:'フォロー',cls:'follow',cols:KB_FOLLOW},
     {lbl:'離脱',cls:'exit',cols:KB_EXIT},
   ]
+  const COL_COUNT=ALL_COLS.length
+  const GRID_COLS=`repeat(${COL_COUNT},116px)`
 
-  /* CSS Grid container */
-  const grid=document.createElement('div')
-  grid.className='kb-grid-wrap'
+  /* Outer flex container (horizontal scroll target) */
+  const outer=document.createElement('div')
+  outer.style.cssText='display:flex;flex-direction:column;padding:8px;width:max-content;min-width:100%;gap:0'
 
-  /* Section labels in grid-row:1 */
-  let colStart=1
+  /* ── STICKY HEADER (sec labels + col headers) ── */
+  const stickyHdr=document.createElement('div')
+  stickyHdr.style.cssText='position:sticky;top:0;z-index:10;background:var(--bg);flex-shrink:0'
+
+  /* Row 1: Section labels */
+  const secRow=document.createElement('div')
+  secRow.style.cssText=`display:grid;grid-template-columns:${GRID_COLS};gap:5px`
   SECTIONS.forEach(sec=>{
     const lbl=document.createElement('div')
     lbl.className=`kb-sec-lbl ${sec.cls}`
-    lbl.style.cssText=`grid-column:${colStart}/span ${sec.cols.length};grid-row:1`
+    lbl.style.gridColumn=`span ${sec.cols.length}`
     const secTotal=sec.cols.reduce((n,c)=>n+(kbData[c.id]||[]).length,0)
     lbl.textContent=`${sec.lbl}  ${secTotal}名`
-    grid.appendChild(lbl)
-    colStart+=sec.cols.length
+    secRow.appendChild(lbl)
   })
 
-  /* All 14 columns in grid-row:2 */
-  SECTIONS.forEach((sec,si)=>{
+  /* Row 2: Column headers */
+  const hdrRow=document.createElement('div')
+  hdrRow.style.cssText=`display:grid;grid-template-columns:${GRID_COLS};gap:5px`
+  SECTIONS.forEach(sec=>{
+    sec.cols.forEach(col=>{
+      const cards=kbData[col.id]||[]
+      const hdrEl=document.createElement('div')
+      hdrEl.className='kb-hdr'+(sec.cls==='offer'?' offer-hdr':sec.cls==='follow'?' follow-hdr':sec.cls==='exit'?' exit-hdr':'')
+      hdrEl.innerHTML=`${col.lbl}<span class="kb-cnt">${cards.length}</span>`
+      hdrRow.appendChild(hdrEl)
+    })
+  })
+
+  stickyHdr.appendChild(secRow)
+  stickyHdr.appendChild(hdrRow)
+  outer.appendChild(stickyHdr)
+
+  /* ── CARDS AREA ── */
+  const cardsRow=document.createElement('div')
+  cardsRow.style.cssText=`display:grid;grid-template-columns:${GRID_COLS};gap:5px`
+
+  SECTIONS.forEach(sec=>{
     sec.cols.forEach(col=>{
       const cards=kbData[col.id]||[]
       const colEl=document.createElement('div')
       colEl.className='kb-col'+(sec.cls==='offer'?' offer-col':sec.cls==='follow'?' follow-col':sec.cls==='exit'?' exit-col':'')
-      colEl.style.gridRow='2'
+      colEl.style.cssText='border-radius:0 0 7px 7px;border-top:none'
       colEl.dataset.col=col.id
-
-      const hdrEl=document.createElement('div');hdrEl.className='kb-hdr'
-      hdrEl.innerHTML=`${col.lbl}<span class="kb-cnt">${cards.length}</span>`
-      colEl.appendChild(hdrEl)
 
       const cardsEl=document.createElement('div');cardsEl.className='kb-cards'
       cards.forEach(s=>{
@@ -1273,7 +1286,6 @@ function renderKB(){
       })
       colEl.appendChild(cardsEl)
 
-      /* Drop: entire column is the drop zone */
       colEl.addEventListener('dragover',ev=>{
         ev.preventDefault();ev.dataTransfer.dropEffect='move'
         document.querySelectorAll('.kb-col').forEach(x=>x.classList.remove('dov'))
@@ -1290,7 +1302,6 @@ function renderKB(){
         pushUndo()
         stu.stage=ns
         stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:ns,cur:true})
-        const movedId=stu.id
         const PIPE_EV=['個別面談','インターンシップ','インターン','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
         const EXIT_STAGES=['辞退','不合格','内定辞退']
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
@@ -1300,11 +1311,12 @@ function renderKB(){
         toast(`${stu.ln} ${stu.fn} → 「${ns}」`)
       })
 
-      grid.appendChild(colEl)
+      cardsRow.appendChild(colEl)
     })
   })
 
-  wrap.appendChild(grid)
+  outer.appendChild(cardsRow)
+  wrap.appendChild(outer)
 }
 
 function togglePaxStatus(evId,pi,field,val,e){
@@ -1316,6 +1328,13 @@ function togglePaxStatus(evId,pi,field,val,e){
     if(stu&&!['辞退','不合格','内定辞退'].includes(stu.stage)){
       stu.stage='辞退';stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:'辞退',cur:true});stu.sch=null;stu.scheduling=false
       toast(`${stu.ln} ${stu.fn} → 辞退`)
+    }
+  }
+  if(field==='result'&&ev.pax[pi].result==='fail'){
+    const stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId)
+    if(stu&&!['辞退','不合格','内定辞退'].includes(stu.stage)){
+      stu.stage='不合格';stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:'不合格',cur:true});stu.sch=null;stu.scheduling=false
+      toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
   scheduleSave();renderEvList();renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
