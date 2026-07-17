@@ -918,7 +918,7 @@ function saveSchedule(){
   if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
-    const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date)||EVENTS.find(ev=>ev.date===date&&ev.time===time)
+    const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time)
     if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})}}
     else{EVENTS.push({id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]})}
   }
