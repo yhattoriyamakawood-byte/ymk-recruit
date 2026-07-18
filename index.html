@@ -365,7 +365,7 @@ html,body{height:100%;overflow:hidden}
             <button class="more-btn" id="ev-more-btn" onclick="toggleMore('ev')" style="display:none"></button>
           </div>
           <div class="dash-zone">
-            <div class="z-hdr"><div class="z-ttl"><i class="ti ti-bell"></i>リマインダー</div><span style="font-size:10px;color:#999">全<span id="rem-total">0</span>件</span></div>
+            <div class="z-hdr"><div class="z-ttl"><i class="ti ti-bell"></i>リマインダー<span style="position:relative;display:inline-block;margin-left:5px" onmouseenter="document.getElementById('rem-info').style.display='block'" onmouseleave="document.getElementById('rem-info').style.display='none'"><i class="ti ti-info-circle" style="font-size:12px;color:#bbb;cursor:pointer;vertical-align:middle"></i><div id="rem-info" style="display:none;position:absolute;left:0;top:18px;z-index:300;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:12px 14px;width:260px;font-size:11px;color:#555;line-height:1.8;white-space:normal"><div style="font-weight:600;color:#333;margin-bottom:6px">リマインドルール</div><div>📅 イベント7日以内 → 案内通知未送</div><div>⏰ イベント3日以内 → リマインド未送</div><div>🎯 役員面接7日前 → 中間リマインド</div><div>✅ 過去14日以内（GW/役員/最終）→ 合否通知未送</div><div>📞 日程調整中で1日以上連絡なし</div><div>📋 最終連絡から10日以上経過</div><div>🎂 誕生日当日</div></div></span></div><span style="font-size:10px;color:#999">全<span id="rem-total">0</span>件</span></div>
             <div class="z-body" id="reminder-list"></div>
             <button class="more-btn" id="rem-more-btn" onclick="toggleMore('rem')" style="display:none"></button>
           </div>
@@ -1513,7 +1513,7 @@ function renderFaze(){
       const rate=reserved>0?Math.round(participated/reserved*100):0
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
-      if(phase!=='個別面談')prevAttended=participated
+      prevAttended=participated
       return{phase,reserved,participated,notDone,rate,reserveRate,targetCount}
     })
   }
