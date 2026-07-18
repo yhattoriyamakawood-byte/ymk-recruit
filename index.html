@@ -625,7 +625,7 @@ const SCH_OPTS=['エントリー','個別面談','インターンシップ','グ
 let STUDENTS=[]
 let EVENTS=[]
 
-const DEFAULT_JOB_TAGS=['営業','マーケティング','エンジニア','企画・戦略','人事・採用','財務・経理','コンサルタント','広報・PR','デザイン','総合職']
+const DEFAULT_JOB_TAGS=['営業','プランナー','設計','工務','経戦']
 const DEFAULT_AXIS_TAGS=['仕事のやりがい','安定・長期雇用','成長できる環境','ワークライフバランス','社会への貢献','挑戦・裁量','給与・待遇','チームワーク','職場の雰囲気','業界への興味']
 const DEFAULT_ATTR_TAGS=['体育会系','理系','文系','帰国子女','留学経験','競プロ','インターン経由','早期選考','院生']
 function makeTagEl(label,selected){
@@ -1436,10 +1436,12 @@ function renderEvList(){
     const past=EVENTS.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(b.date)-new Date(a.date))
     const upHtml=upcoming.map(ev=>buildEvCard(ev,false)).join('')
     const pastHtml=past.map(ev=>buildEvCard(ev,true)).join('')
-    const secHdr=(label,count,icon,clr)=>`<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bd)"><i class="ti ${icon}" style="font-size:13px;color:${clr}"></i><span style="font-size:11px;font-weight:600;color:${clr}">${label}</span><span style="font-size:11px;color:#bbb">(${count}件)</span></div>`
+    const secHdr=(label,count,icon,clr,sub)=>`<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bd)"><i class="ti ${icon}" style="font-size:13px;color:${clr}"></i><span style="font-size:11px;font-weight:600;color:${clr}">${label}</span><span style="font-size:11px;color:#bbb">(${count}件)</span>${sub||''}</div>`
+    const pastAlertCount=past.filter(ev=>{const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title);return fp.some(p=>p.attended!=='yes'&&p.attended!=='no')||(hasResult&&fp.some(p=>p.result===null&&p.attended!=='no'))}).length
+    const pastAlertBadge=pastAlertCount>0?`<span style="font-size:10px;background:#fff3e0;color:#e67e22;border:1px solid #f5c07a;border-radius:10px;padding:1px 7px;font-weight:600">未対応 ${pastAlertCount}件</span>`:''
     let evHtml=''
     if(upcoming.length)evHtml+=secHdr('予定',''+upcoming.length,'ti-calendar-event','#2c7be5')+upHtml
-    if(past.length)evHtml+=(upcoming.length?'<div style="height:8px"></div>':'')+secHdr('過去',''+past.length,'ti-archive','#999')+pastHtml
+    if(past.length)evHtml+=(upcoming.length?'<div style="height:8px"></div>':'')+secHdr('過去',''+past.length,'ti-archive','#999',pastAlertBadge)+pastHtml
     document.getElementById('ev-list').innerHTML=evHtml||'<div style="padding:24px;text-align:center;font-size:12px;color:#999">イベントがありません</div>'
   }
   window.toggleEvCard=function(id){selEvId=selEvId===id?null:id;draw()};draw()
@@ -1508,7 +1510,8 @@ function renderFaze(){
       const participated=attendedIds.size
       const notDone=pendingIds.size
       const rate=reserved>0?Math.round(participated/reserved*100):0
-      return{phase,reserved,participated,notDone,rate}
+      const reserveRate=targetIds.size>0?Math.round(reserved/targetIds.size*100):0
+      return{phase,reserved,participated,notDone,rate,reserveRate,targetCount:targetIds.size}
     })
   }
   function tableHTML(stats,label){
@@ -1517,14 +1520,16 @@ function renderFaze(){
     const totalPar=evStats.reduce((s,r)=>s+r.participated,0)
     const withData=evStats.filter(r=>r.reserved>0)
     const avgRate=withData.length>0?Math.round(withData.reduce((s,r)=>s+r.rate,0)/withData.length):0
+    const withResData=evStats.filter(r=>r.targetCount>0)
+    const avgResRate=withResData.length>0?Math.round(withResData.reduce((s,r)=>s+r.reserveRate,0)/withResData.length):0
     const totalNotDone=evStats.reduce((s,r)=>s+r.notDone,0)
     return`<div style="margin-bottom:20px">
       <div style="font-size:11px;font-weight:600;color:#333;margin-bottom:8px;display:flex;align-items:center;gap:8px">
         ${label?`<span style="padding:2px 8px;background:#f0f0f0;border-radius:4px">${label}</span>`:''}
-        <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
+        <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　平均予約率 <span style="color:${rateColor(avgResRate)};font-weight:600">${avgResRate}%</span>　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
       </div>
-      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数</th><th>参加率</th><th style="text-align:right">未実施</th></tr></thead>
-      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td>${isEntry?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${r.rate}%;background:${rateBg(r.rate)}"></div></div><span style="font-size:11px;color:${rateColor(r.rate)};font-weight:600;min-width:30px">${r.reserved>0?r.rate+'%':'—'}</span></div>`}</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td></tr>`}).join('')}</tbody></table></div>`
+      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">対象</th><th style="text-align:right">予約数</th><th>予約率</th><th style="text-align:right">参加数</th><th>参加率</th><th style="text-align:right">未実施</th></tr></thead>
+      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:#999">${isEntry?'—':(r.targetCount??'—')+'名'}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td>${isEntry||rr===null?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${rr}%;background:${rateBg(rr)}"></div></div><span style="font-size:11px;color:${rateColor(rr)};font-weight:600;min-width:30px">${rr+'%'}</span></div>`}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td>${isEntry?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${r.rate}%;background:${rateBg(r.rate)}"></div></div><span style="font-size:11px;color:${rateColor(r.rate)};font-weight:600;min-width:30px">${r.reserved>0?r.rate+'%':'—'}</span></div>`}</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td></tr>`}).join('')}</tbody></table></div>`
   }
   if(curFazeTab==='phase'){
     const stats=calcStats(sts)
