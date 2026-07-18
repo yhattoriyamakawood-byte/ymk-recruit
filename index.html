@@ -1480,18 +1480,19 @@ function renderFaze(){
   const sts=fazeMediaSel==='全体'?allSts:allSts.filter(s=>s.media===fazeMediaSel)
   function calcStats(targetSts){
     const targetIds=new Set(targetSts.map(s=>s.id))
+    let prevAttended=targetSts.length
     return PIPE.map(phase=>{
       // エントリー・内定出し・内定承諾は予約=null、参加=パイプライン実数
       if(phase==='エントリー'){
-        return{phase,reserved:null,participated:targetSts.length,notDone:null,rate:null}
+        return{phase,reserved:null,participated:targetSts.length,notDone:null,rate:null,reserveRate:null,targetCount:null}
       }
       if(phase==='内定出し'){
         const n=targetSts.filter(s=>['承諾待ち','内定承諾','内定辞退'].includes(s.stage)||s.hist.some(h=>h.s==='承諾待ち')).length
-        return{phase,reserved:null,participated:n,notDone:null,rate:null}
+        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null}
       }
       if(phase==='内定承諾'){
         const n=targetSts.filter(s=>s.stage==='内定承諾').length
-        return{phase,reserved:null,participated:n,notDone:null,rate:null}
+        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null}
       }
       // イベントpaxベース
       const evList=EVENTS.filter(ev=>ev.title===phase)
@@ -1510,8 +1511,10 @@ function renderFaze(){
       const participated=attendedIds.size
       const notDone=pendingIds.size
       const rate=reserved>0?Math.round(participated/reserved*100):0
-      const reserveRate=targetIds.size>0?Math.round(reserved/targetIds.size*100):0
-      return{phase,reserved,participated,notDone,rate,reserveRate,targetCount:targetIds.size}
+      const targetCount=prevAttended
+      const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
+      if(phase!=='個別面談')prevAttended=participated
+      return{phase,reserved,participated,notDone,rate,reserveRate,targetCount}
     })
   }
   function tableHTML(stats,label){
