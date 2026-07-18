@@ -329,7 +329,7 @@ html,body{height:100%;overflow:hidden}
     <div class="ni" onclick="go('stud',this)"><i class="ti ti-users"></i>学生名簿</div>
     <div class="ni-grp-lbl">管理</div>
     <div class="ni" onclick="go('pipe',this)"><i class="ti ti-layout-kanban"></i>選考ステップ</div>
-    <div class="ni" onclick="go('evnt',this)"><i class="ti ti-calendar-event"></i>イベント一覧</div>
+    <div class="ni" onclick="go('evnt',this)"><i class="ti ti-calendar-event"></i>イベント一覧<span id="ev-tab-badge" style="display:none;margin-left:5px;font-size:10px;background:#e74c3c;color:#fff;border-radius:8px;padding:1px 6px;font-weight:600;vertical-align:middle"></span></div>
     <div class="ni-grp-lbl">分析</div>
     <div class="ni" onclick="go('faze',this)"><i class="ti ti-chart-dots"></i>選考分析</div>
     <div class="ni" onclick="go('anal',this)"><i class="ti ti-chart-bar"></i>媒体分析</div>
@@ -1152,8 +1152,8 @@ function selStu(id,refresh){
   renderStu()
   }catch(e){console.error('selStu error:',e);dp.innerHTML='<div style="padding:20px;color:#e74c3c;font-size:12px">表示エラー: '+e.message+'</div>'}
 }
-function updateLC(id,val){const s=STUDENTS.find(x=>x.id===id);if(s){s.lc=val;renderStu();if(getCur()==='dash')renderDash();if(selId===id)selStu(id,true)}}
-function updateMemo(id,val){const s=STUDENTS.find(x=>x.id===id);if(s){s.memo=val;if(selId===id)selStu(id,true)}}
+function updateLC(id,val){const s=STUDENTS.find(x=>x.id===id);if(s){pushUndo();s.lc=val;renderStu();if(getCur()==='dash')renderDash();if(selId===id)selStu(id,true)}}
+function updateMemo(id,val){const s=STUDENTS.find(x=>x.id===id);if(s){pushUndo();s.memo=val;if(selId===id)selStu(id,true)}}
 
 function openEventTab(evId){
   const navEl=document.querySelectorAll('.ni')[3]
@@ -1161,11 +1161,12 @@ function openEventTab(evId){
   selEvId=evId
   renderEvList()
 }
-function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;s.lc=new Date().toISOString().slice(0,10);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
+function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=new Date().toISOString().slice(0,10);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
 function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
   const {evId,pi,field}=r.action
   const ev=EVENTS.find(e=>e.id===evId);if(!ev||!ev.pax[pi])return
+  pushUndo()
   if(field==='result'){ev.pax[pi].result='pass'}
   else{ev.pax[pi][field]=true}
   renderDash()
@@ -1439,8 +1440,12 @@ function renderEvList(){
     const secHdr=(label,count,icon,clr,sub)=>`<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bd)"><i class="ti ${icon}" style="font-size:13px;color:${clr}"></i><span style="font-size:11px;font-weight:600;color:${clr}">${label}</span><span style="font-size:11px;color:#bbb">(${count}件)</span>${sub||''}</div>`
     const pastAlertCount=past.filter(ev=>{const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title);return fp.some(p=>p.attended!=='yes'&&p.attended!=='no')||(hasResult&&fp.some(p=>p.result===null&&p.attended!=='no'))}).length
     const pastAlertBadge=pastAlertCount>0?`<span style="font-size:10px;background:#fff3e0;color:#e67e22;border:1px solid #f5c07a;border-radius:10px;padding:1px 7px;font-weight:600">未対応 ${pastAlertCount}件</span>`:''
+    const upcomingAlertCount=upcoming.filter(ev=>{const du=dUntil(ev.date);const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});return fp.some(p=>(!p.notified&&du<=7)||(!p.reminded&&du<=3))}).length
+    const upcomingAlertBadge=upcomingAlertCount>0?`<span style="font-size:10px;background:#fff3e0;color:#e67e22;border:1px solid #f5c07a;border-radius:10px;padding:1px 7px;font-weight:600">未対応 ${upcomingAlertCount}件</span>`:''
+    const totalAlertCount=upcomingAlertCount+pastAlertCount
+    const tb=document.getElementById('ev-tab-badge');if(tb){if(totalAlertCount>0){tb.textContent=totalAlertCount+'件';tb.style.display='inline'}else{tb.style.display='none'}}
     let evHtml=''
-    if(upcoming.length)evHtml+=secHdr('予定',''+upcoming.length,'ti-calendar-event','#2c7be5')+upHtml
+    if(upcoming.length)evHtml+=secHdr('予定',''+upcoming.length,'ti-calendar-event','#2c7be5',upcomingAlertBadge)+upHtml
     if(past.length)evHtml+=(upcoming.length?'<div style="height:8px"></div>':'')+secHdr('過去',''+past.length,'ti-archive','#999',pastAlertBadge)+pastHtml
     document.getElementById('ev-list').innerHTML=evHtml||'<div style="padding:24px;text-align:center;font-size:12px;color:#999">イベントがありません</div>'
   }
