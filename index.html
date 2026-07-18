@@ -1443,7 +1443,7 @@ function renderEvList(){
     const upcomingAlertCount=upcoming.filter(ev=>{const du=dUntil(ev.date);const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});return fp.some(p=>!p.notified||(!p.reminded&&du<=3))}).length
     const upcomingAlertBadge=upcomingAlertCount>0?`<span style="font-size:10px;color:#c0392b;font-weight:600;margin-left:2px">未対応 ${upcomingAlertCount}件</span>`:''
     const totalAlertCount=upcomingAlertCount+pastAlertCount
-    const tb=document.getElementById('ev-tab-badge');if(tb){if(totalAlertCount>0){tb.textContent=totalAlertCount+'件';tb.style.display='inline'}else{tb.style.display='none'}}
+    const tb=document.getElementById('ev-tab-badge');if(tb){if(totalAlertCount>0){tb.textContent=totalAlertCount;tb.style.display='inline'}else{tb.style.display='none'}}
     let evHtml=''
     if(upcoming.length)evHtml+=secHdr('予定',''+upcoming.length,'ti-calendar-event','#2c7be5',upcomingAlertBadge)+upHtml
     if(past.length)evHtml+=(upcoming.length?'<div style="height:8px"></div>':'')+secHdr('過去',''+past.length,'ti-archive','#999',pastAlertBadge)+pastHtml
