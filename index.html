@@ -1391,8 +1391,8 @@ function declineStu(id,e){
   toast(`${s.ln} ${s.fn} → 「辞退」`)
 }
 function renderEvList(){
-  let _evUpExp=false,_evPastExp=false
-  const MAX_UP=5,MAX_PAST=3
+  const MAX_PAST=3
+  window._evPastExp=false
   function evTypeColor(title){
     const map={
       '個別面談':{left:'#2c7be5',bg:'#eef5ff',text:'#1a4fa0'},
@@ -1446,12 +1446,11 @@ function renderEvList(){
     }
     const upcoming=EVENTS.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(a.date)-new Date(b.date))
     const past=EVENTS.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(b.date)-new Date(a.date))
-    const showUp=_evUpExp?upcoming:upcoming.slice(0,MAX_UP)
-    const showPast=_evPastExp?past:past.slice(0,MAX_PAST)
-    const upHtml=showUp.map(ev=>buildEvCard(ev,false)).join('')
+    const showPast=window._evPastExp?past:past.slice(0,MAX_PAST)
+    const upHtml=upcoming.map(ev=>buildEvCard(ev,false)).join('')
     const pastHtml=showPast.map(ev=>buildEvCard(ev,true)).join('')
-    const upMoreBtn=upcoming.length>MAX_UP?`<div style="text-align:center;margin:6px 0"><button onclick="_evUpExp=!_evUpExp;draw()" style="font-size:11px;color:#666;background:none;border:1px solid #ddd;border-radius:5px;padding:4px 14px;cursor:pointer">${_evUpExp?'▲ 折りたたむ':`▼ もっと見る（+${upcoming.length-MAX_UP}件）`}</button></div>`:''
-    const pastMoreBtn=past.length>MAX_PAST?`<div style="text-align:center;margin:6px 0"><button onclick="_evPastExp=!_evPastExp;draw()" style="font-size:11px;color:#666;background:none;border:1px solid #ddd;border-radius:5px;padding:4px 14px;cursor:pointer">${_evPastExp?'▲ 折りたたむ':`▼ もっと見る（+${past.length-MAX_PAST}件）`}</button></div>`:''
+    const upMoreBtn=''
+    const pastMoreBtn=past.length>MAX_PAST?`<div style="text-align:center;margin:6px 0"><button onclick="window._evPastExp=!window._evPastExp;window._evListDraw()" style="font-size:11px;color:#666;background:none;border:1px solid #ddd;border-radius:5px;padding:4px 14px;cursor:pointer">${window._evPastExp?'▲ 折りたたむ':`▼ もっと見る（+${past.length-MAX_PAST}件）`}</button></div>`:''
     const secHdr=(label,count,icon,clr,sub)=>`<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bd)"><i class="ti ${icon}" style="font-size:13px;color:${clr}"></i><span style="font-size:11px;font-weight:600;color:${clr}">${label}</span><span style="font-size:11px;color:#bbb">(${count}件)</span>${sub||''}</div>`
     const pastAlertCount=past.filter(ev=>{const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title);return fp.some(p=>p.attended!=='yes'&&p.attended!=='no')||(hasResult&&fp.some(p=>p.result===null&&p.attended!=='no'))}).length
     const pastAlertBadge=pastAlertCount>0?`<span style="font-size:10px;color:#c0392b;font-weight:600;margin-left:2px">未対応 ${pastAlertCount}件</span>`:''
@@ -1464,6 +1463,7 @@ function renderEvList(){
     if(past.length)evHtml+=(upcoming.length?'<div style="height:8px"></div>':'')+secHdr('過去',''+past.length,'ti-archive','#999',pastAlertBadge)+pastHtml+pastMoreBtn
     document.getElementById('ev-list').innerHTML=evHtml||'<div style="padding:24px;text-align:center;font-size:12px;color:#999">イベントがありません</div>'
   }
+  window._evListDraw=draw
   window.toggleEvCard=function(id){selEvId=selEvId===id?null:id;draw()};draw()
 }
 
