@@ -1211,9 +1211,11 @@ function renderKB(){
     if(_kbq){const _norm=v=>(v||'').normalize('NFKC').toLowerCase();const _h1=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(_norm).join(' ');const _h2=_norm(s.ln)+_norm(s.fn);const _terms=_kbq.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);if(!_terms.every(t=>_h1.includes(t)||_h2.includes(t)))return}
     const k=S2KB[s.stage];if(k)kbData[k].push(s)
   })
-  /* Sort each column by date ascending; undated → bottom */
+  /* Sort each column: 日程調整中 → top, then date ascending, undated → bottom */
   ALL_COLS.forEach(c=>{
     kbData[c.id].sort((a,b)=>{
+      if(a.scheduling&&!b.scheduling)return -1
+      if(!a.scheduling&&b.scheduling)return 1
       if(!a.sch?.date&&!b.sch?.date)return 0
       if(!a.sch?.date)return 1
       if(!b.sch?.date)return -1
