@@ -399,7 +399,16 @@ html,body{height:100%;overflow:hidden}
         <div class="fb">
           <input class="fi" style="width:140px" placeholder="氏名・大学" oninput="sqry=this.value;renderStu()">
           <select class="fi" id="filter-media" onchange="smedia=this.value;renderStu()"><option value="">全媒体</option></select>
-          <select class="fi" id="stud-filter-stage" onchange="sstage=this.value;renderStu()"><option value="">全ステージ</option><option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定承諾</option><option>内定辞退</option><option>フォローイベント</option><option>不合格</option><option>辞退</option></select>
+          <div style="position:relative" id="stage-filter-wrap">
+            <button class="fi" id="stage-filter-btn" onclick="toggleStageMenu(event)" style="cursor:pointer;display:flex;align-items:center;gap:4px;min-width:90px;justify-content:space-between;background:#fff">
+              <span id="stage-filter-label">全ステージ</span>
+              <i class="ti ti-chevron-down" style="font-size:10px;color:#999"></i>
+            </button>
+            <div id="stage-filter-menu" style="display:none;position:absolute;top:32px;left:0;background:#fff;border:1px solid var(--bd);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:300;padding:8px;min-width:220px">
+              <div style="display:flex;flex-wrap:wrap;gap:4px" id="stage-chips"></div>
+              <div style="margin-top:6px;text-align:right"><button onclick="clearStageFilter()" style="font-size:10px;color:#999;background:none;border:none;cursor:pointer;padding:2px 6px">クリア</button></div>
+            </div>
+          </div>
           <select class="fi" id="stud-filter-yr" onchange="syr=this.value?parseInt(this.value):null;renderStu()"><option value="">全卒年</option></select>
           <div style="position:relative">
             <button class="btn" onclick="toggleMediaMgr()" title="媒体管理" style="padding:0 8px"><i class="ti ti-building-store" style="font-size:13px"></i> 媒体</button>
@@ -653,8 +662,9 @@ function resetTagGroups(jobSel,axisSel,attrSel){
 }
 resetTagGroups()
 
-let YEARS=[2025,2026,2027,2028],selYears=new Set([2026]),sqry='',smedia='',sstage='',syr=null,selId=null,selEvId=null,curFazeTab='phase',curPer='今月',fazeDateFrom='',fazeDateTo=''
+let YEARS=[2025,2026,2027,2028],selYears=new Set([2026]),sqry='',smedia='',sstage=new Set(),syr=null,selId=null,selEvId=null,curFazeTab='phase',curPer='今月',fazeDateFrom='',fazeDateTo=''
 let MEDIAS=[]
+window._evPastExp=false
 let COMPANY_STAFF=[]
 let STAFF=[]
 let MEDIA_COSTS={} // {media: [{label:'プラン名',amount:0}, ...]}
@@ -1136,7 +1146,14 @@ function renderDash(){
   const remMore=document.getElementById('rem-more-btn');if(rems.length>MAX_SHOW_REM){remMore.style.display='flex';remMore.textContent=remExpanded?'▲ 折りたたむ':`▼ もっと見る（+${rems.length-MAX_SHOW_REM}件）`}else remMore.style.display='none'
 }
 
-function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage&&s.stage!==sstage)return false;return true})}
+const ALL_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','フォローイベント','不合格','辞退']
+function toggleStageMenu(e){e.stopPropagation();const m=document.getElementById('stage-filter-menu');if(!m)return;const isOpen=m.style.display==='block';if(isOpen){m.style.display='none';return}renderStageChips();m.style.display='block'}
+function renderStageChips(){const c=document.getElementById('stage-chips');if(!c)return;c.innerHTML=ALL_STAGES.map(st=>`<span onclick="toggleStage('${st}')" style="cursor:pointer;padding:3px 8px;border-radius:12px;font-size:11px;border:1px solid ${sstage.has(st)?'#4a90d9':'#ddd'};background:${sstage.has(st)?'#e8f0fb':'#f9f9f9'};color:${sstage.has(st)?'#2563ab':'#555'}">${st}</span>`).join('')}
+function toggleStage(st){if(sstage.has(st)){sstage.delete(st)}else{sstage.add(st)};updateStageBtnLabel();renderStageChips();renderStu()}
+function updateStageBtnLabel(){const lbl=document.getElementById('stage-filter-label');if(!lbl)return;lbl.textContent=sstage.size===0?'全ステージ':`${sstage.size}件選択`}
+function clearStageFilter(){sstage.clear();updateStageBtnLabel();renderStageChips();renderStu()}
+document.addEventListener('click',function(e){const wrap=document.getElementById('stage-filter-wrap');const menu=document.getElementById('stage-filter-menu');if(menu&&menu.style.display==='block'&&wrap&&!wrap.contains(e.target)){menu.style.display='none'}})
+function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage.size>0&&!sstage.has(s.stage))return false;return true})}
 function renderStu(){document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td><div style="font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${PDF_STORE[s.id]?`<button onclick="openPdfModal(${s.id})" title="${PDF_STORE[s.id].name}" style="border:none;background:none;cursor:pointer;padding:2px;color:#e74c3c;font-size:16px"><i class="ti ti-file-type-pdf"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="PDFをアップロード" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div></td><td style="color:#999;font-size:11px">${s.yr}卒</td><td><span class="${mediaCls(s.media)}">${s.media}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td>${schChipHTML(s)}</td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
 
 function selStu(id,refresh){
@@ -1337,15 +1354,15 @@ function renderKB(){
 }
 
 function removePaxStu(evId,stuId,e){
-  e.stopPropagation()
+  e.stopPropagation();e.stopImmediatePropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
   pushUndo()
   ev.pax=ev.pax.filter(p=>p.stuId!==stuId)
-  scheduleSave();renderEvList()
+  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();renderEvList();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw()}
   toast('イベントから削除しました')
 }
 function togglePaxStatus(evId,pi,field,val,e){
-  e.stopPropagation();const ev=EVENTS.find(e=>e.id===evId);if(!ev)return
+  e.stopPropagation();e.stopImmediatePropagation();const ev=EVENTS.find(ev2=>ev2.id===evId);if(!ev)return
   pushUndo()
   if(field==='result'||field==='attended'){ev.pax[pi][field]=ev.pax[pi][field]===val?null:val}else{ev.pax[pi][field]=!ev.pax[pi][field]}
   if(field==='attended'&&ev.pax[pi].attended==='no'){
@@ -1362,7 +1379,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
-  scheduleSave();renderEvList();renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
+  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();renderEvList();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
 function deleteEvent(evId,e){
@@ -1394,7 +1411,6 @@ function declineStu(id,e){
 }
 function renderEvList(){
   const MAX_PAST=3
-  window._evPastExp=false
   function evTypeColor(title){
     const map={
       '個別面談':{left:'#2c7be5',bg:'#eef5ff',text:'#1a4fa0'},
@@ -1439,7 +1455,7 @@ function renderEvList(){
         return`<tr><td><div style="display:flex;gap:4px"><button class="st-btn ${p.attended==='yes'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','yes',event)">参加</button><button class="st-btn ${p.attended==='no'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','no',event)">不参加</button></div></td><td style="font-weight:500;white-space:nowrap">${stu.ln} ${stu.fn}<br><button style="font-size:9px;margin-top:2px;padding:0 5px;height:16px;border:1px solid #ddd;border-radius:3px;background:#fff;cursor:pointer;color:#555" onclick="event.stopPropagation();showStuOverlay(${stu.id})">詳細</button></td><td>${stu.gender}</td><td style="white-space:nowrap;text-align:center">${String(stu.yr).slice(-2)}卒</td><td style="white-space:nowrap">${stu.uni}<br><span style="font-size:10px;color:#999">${stu.fac}・${stu.dept}</span></td><td>${stu.phone}</td><td><span class="${mediaCls(stu.media)}">${stu.media}</span></td><td><button class="st-btn ${p.notified?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'notified',true,event)">${p.notified?'✓ 送済':'未送'}</button></td><td><button class="st-btn ${p.reminded?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'reminded',true,event)">${p.reminded?'✓ 送済':'未送'}</button></td>${resultCell}<td><button onclick="removePaxStu(${ev.id},${p.stuId},event)" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:15px;line-height:1;padding:2px 4px" title="イベントから削除">×</button></td></tr>`
       }).join('')
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
-      const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto">${paxBody}</div>`:''
+      const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto" onclick="event.stopPropagation()">${paxBody}</div>`:''
       const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="openGcalTask(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button></div>`
       const titleColor=isPastSection?'color:#999;':`color:${tc.text};`;
       const dotColor=isPastSection?'#bbb':tc.left;
