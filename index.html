@@ -410,6 +410,7 @@ html,body{height:100%;overflow:hidden}
             </div>
           </div>
           <select class="fi" id="stud-filter-yr" onchange="syr=this.value?parseInt(this.value):null;renderStu()"><option value="">全卒年</option></select>
+          <button class="fi" id="hide-exit-btn" onclick="shideExit=!shideExit;document.getElementById('hide-exit-icon').className=shideExit?'ti ti-eye-off':'ti ti-eye';document.getElementById('hide-exit-btn').style.color=shideExit?'#aaa':'#2563ab';renderStu()" style="cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;color:#aaa" title="辞退・不合格を表示/非表示"><i class="ti ti-eye-off" id="hide-exit-icon"></i><span>辞退・不合格</span></button>
           <div style="position:relative">
             <button class="btn" onclick="toggleMediaMgr()" title="媒体管理" style="padding:0 8px"><i class="ti ti-building-store" style="font-size:13px"></i> 媒体</button>
             <div id="media-mgr-panel" style="display:none;position:absolute;top:32px;left:0;background:#fff;border:1px solid var(--bd);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;padding:12px;min-width:260px">
@@ -662,7 +663,7 @@ function resetTagGroups(jobSel,axisSel,attrSel){
 }
 resetTagGroups()
 
-let YEARS=[2025,2026,2027,2028],selYears=new Set([2026]),sqry='',smedia='',sstage=new Set(),syr=null,selId=null,selEvId=null,curFazeTab='phase',curPer='今月',fazeDateFrom='',fazeDateTo=''
+let YEARS=[2025,2026,2027,2028],selYears=new Set([2026]),sqry='',smedia='',sstage=new Set(),syr=null,shideExit=true,selId=null,selEvId=null,curFazeTab='phase',curPer='今月',fazeDateFrom='',fazeDateTo=''
 let MEDIAS=[]
 window._evPastExp=false
 let COMPANY_STAFF=[]
@@ -1153,7 +1154,7 @@ function toggleStage(st){if(sstage.has(st)){sstage.delete(st)}else{sstage.add(st
 function updateStageBtnLabel(){const lbl=document.getElementById('stage-filter-label');if(!lbl)return;lbl.textContent=sstage.size===0?'全ステージ':`${sstage.size}件選択`}
 function clearStageFilter(){sstage.clear();updateStageBtnLabel();renderStageChips();renderStu()}
 document.addEventListener('click',function(e){const wrap=document.getElementById('stage-filter-wrap');const menu=document.getElementById('stage-filter-menu');if(menu&&menu.style.display==='block'&&wrap&&!wrap.contains(e.target)){menu.style.display='none'}})
-function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage.size>0&&!sstage.has(s.stage))return false;return true})}
+function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(shideExit&&['辞退','不合格','内定辞退'].includes(s.stage))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage.size>0&&!sstage.has(s.stage))return false;return true})}
 function renderStu(){document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td><div style="font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${PDF_STORE[s.id]?`<button onclick="openPdfModal(${s.id})" title="${PDF_STORE[s.id].name}" style="border:none;background:none;cursor:pointer;padding:2px;color:#e74c3c;font-size:16px"><i class="ti ti-file-type-pdf"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="PDFをアップロード" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div></td><td style="color:#999;font-size:11px">${s.yr}卒</td><td><span class="${mediaCls(s.media)}">${s.media}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td>${schChipHTML(s)}</td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
 
 function selStu(id,refresh){
