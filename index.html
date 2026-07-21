@@ -1782,6 +1782,9 @@ async function impParseSheet(file){
     fn:['名','氏名（名）','名前','first_name','first name','given name'],
     lk:['姓（かな）','姓カナ','せい','姓（フリガナ）'],
     fk:['名（かな）','名カナ','めい','名（フリガナ）'],
+    kana:['フリガナ','ふりがな','読み','よみがな','氏名（フリガナ）','氏名フリガナ','名前（フリガナ）'],
+    city:['市区町村','市町村','city','市区'],
+    addr:['番地・建物名','詳細住所','番地','address','住所2'],
     uni:['大学名','学校名','university','大学'],
     fac:['学部','faculty','学部名'],
     dept:['学科','専攻','department'],
@@ -1828,10 +1831,12 @@ async function impParseSheet(file){
     const g=k=>idx[k]?String(r[idx[k]]||'').trim():''
     let ln=g('ln'),fn=g('fn')
     if(!ln&&nameCol){const parts=String(r[nameCol]||'').trim().split(/[\s　]+/);ln=parts[0]||'';fn=parts[1]||''}
+    let lk=g('lk'),fk=g('fk')
+    if(!lk&&!fk){const kana=g('kana');if(kana){const kp=kana.split(/[\s　]+/);lk=kp[0]||'';fk=kp.slice(1).join('')||''}}
     const yrRaw=g('yr');const yr=parseInt(yrRaw)
     const stage=normStage(g('stage'))
     const lcRaw=g('lc');const lc=lcRaw?lcRaw:null
-    return{ln,fn,lk:g('lk'),fk:g('fk'),uni:g('uni'),fac:g('fac'),dept:g('dept'),gender:g('gender')||'男性',home:g('home'),city:'',phone:g('phone')||'—',email:g('email'),yr:isNaN(yr)?null:yr,media:g('media')||'スプレッドシート',stage,rank:normRank(g('rank')),memo:g('memo'),lc}
+    return{ln,fn,lk,fk,uni:g('uni'),fac:g('fac'),dept:g('dept'),gender:g('gender')||'男性',home:g('home'),city:g('city'),addr:g('addr'),phone:g('phone')||'—',email:g('email'),yr:isNaN(yr)?null:yr,media:g('media')||'スプレッドシート',stage,rank:normRank(g('rank')),memo:g('memo'),lc}
   }).filter(r=>r.ln||r.uni||r.yr)
 }
 async function impProcess(file){
