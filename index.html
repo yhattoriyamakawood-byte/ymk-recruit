@@ -734,6 +734,7 @@ function dUntil(d){if(!d)return 9999;const t=new Date();t.setHours(0,0,0,0);cons
 function fmtDateW(iso){if(!iso)return'';const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()}(${WDAYS[d.getDay()]})`}
 function fmtMDW(iso){if(!iso)return{m:'',d:'',w:''};const d=new Date(iso);return{m:`${d.getMonth()+1}月`,d:d.getDate(),w:WDAYS[d.getDay()]}}
 function todayMD(){const d=new Date();return`${d.getMonth()+1}/${d.getDate()}`}
+function localDateStr(d=new Date()){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function nextId(arr){return arr.length>0?Math.max(...arr.map(x=>x.id))+1:1}
 function schChipHTML(s){if(!s.sch?.date)return`<span style="font-size:10px;color:#ccc">—</span>`;const days=dUntil(s.sch.date);const soon=days<=3&&days>=0;return`<span class="ev-chip ${soon?'soon':''}" style="align-items:flex-start;flex-direction:column;gap:1px"><span style="font-size:9px;font-weight:600;line-height:1.3">${s.sch.title}</span><span style="display:flex;align-items:center;gap:3px;font-size:10px"><i class="ti ti-calendar-event" style="font-size:10px"></i>${fmtDateW(s.sch.date)} ${s.sch.time}</span></span>`}
 function lcStyle(s){const d=dSince(s.lc);if(!s.lc)return'color:#ccc';if(d>14)return'color:#a32d2d;font-weight:500';if(d>7)return'color:#ba7517;font-weight:500';return'color:#666'}
@@ -767,7 +768,7 @@ function submitStudent(){
   if(!ln||!fn){toast('氏名を入力してください');return}
   const vals={ln,fn,lk:nkc(document.getElementById('f-lk').value),fk:nkc(document.getElementById('f-fk').value),gender:document.getElementById('f-gender').value,yr:parseInt(document.getElementById('f-yr').value),uni:document.getElementById('f-uni').value,fac:document.getElementById('f-fac').value,dept:document.getElementById('f-dept').value,home:document.getElementById('f-home').value,city:document.getElementById('f-city').value,addr:document.getElementById('f-addr').value,homeR:document.getElementById('f-homeR').value||null,cityR:document.getElementById('f-cityR').value||null,addrR:document.getElementById('f-addrR').value||null,email:document.getElementById('f-email').value,phone:document.getElementById('f-phone').value,media:document.getElementById('f-media').value,user:document.getElementById('f-user').value,rank:document.getElementById('f-rank').value,memo:document.getElementById('f-memo').value,bday:(()=>{const _v=document.getElementById('f-bday').value;return _v?_v.slice(5).replace('-','/'):null})(),jobTags:[...document.querySelectorAll('#tg-job .tc.on')].map(t=>t.dataset.label),axisTags:[], attrTags:[]}
   if(isEdit){const s=STUDENTS.find(x=>x.id===editStuId);if(s)Object.assign(s,vals);toast('学生情報を更新しました')}
-  else{const todayISO=new Date().toISOString().slice(0,10);STUDENTS.push({id:nextId(STUDENTS),...vals,stage:'エントリー',lc:todayISO,entryDate:todayISO,scheduling:false,sch:null,hist:[{d:todayMD(),s:'エントリー',cur:true}]});toast(`${ln} ${fn} さんを追加しました`)}
+  else{const todayISO=localDateStr();STUDENTS.push({id:nextId(STUDENTS),...vals,stage:'エントリー',lc:todayISO,entryDate:todayISO,scheduling:false,sch:null,hist:[{d:todayMD(),s:'エントリー',cur:true}]});toast(`${ln} ${fn} さんを追加しました`)}
   ensureMedia(vals.media)
   closeModal('ov-student');syncPipelineEvents();renderStu();renderDash();const cur=getCur();if(cur==='pipe'){renderKB();if(selPipeId===editStuId)selPipeStu(editStuId)}if(cur==='evnt')renderEvList();if(selPipeId&&selPipeId===(isEdit?editStuId:STUDENTS[STUDENTS.length-1]?.id))selPipeStu(selPipeId)
 }
@@ -806,8 +807,8 @@ function openGcalEvent(evId,e){
 function openGcalTask(evId,e){
   if(e)e.stopPropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
-  const d=new Date(ev.date);d.setDate(d.getDate()-7)
-  const ds=d.toISOString().slice(0,10).replace(/-/g,'')
+  const d=new Date(ev.date+'T00:00:00');d.setDate(d.getDate()-7)
+  const ds=localDateStr(d).replace(/-/g,'')
   const title='役員面接一週間前（'+ev.date.slice(5).replace('-','/')+'）'
   const url='https://calendar.google.com/calendar/r/eventedit?text='+encodeURIComponent(title)
     +'&dates='+ds+'T090000/'+ds+'T093000'
@@ -925,7 +926,7 @@ function openScheduleModal(stuId,e){
   document.getElementById('sch-custom-row').style.display=sel.value==='その他（自由入力）'?'block':'none'
   const isSchFlag=s.scheduling||false
   document.getElementById('sch-scheduling').checked=isSchFlag
-  document.getElementById('sch-date').value=isSchFlag?'':(s.sch?.date||new Date().toISOString().slice(0,10))
+  document.getElementById('sch-date').value=isSchFlag?'':(s.sch?.date||localDateStr())
   document.getElementById('sch-time').value=isSchFlag?'':(s.sch?.time||'10:00')
   document.getElementById('sch-date').disabled=false
   document.getElementById('sch-time').disabled=false
@@ -940,7 +941,7 @@ function toggleSchFields(cb){
   const dateEl=document.getElementById('sch-date')
   const timeEl=document.getElementById('sch-time')
   if(cb.checked){dateEl.value='';timeEl.value=''}
-  else{if(!dateEl.value)dateEl.value=new Date().toISOString().slice(0,10);if(!timeEl.value)timeEl.value='10:00'}
+  else{if(!dateEl.value)dateEl.value=localDateStr();if(!timeEl.value)timeEl.value='10:00'}
 }
 function saveSchedule(){
   pushUndo()
@@ -1205,7 +1206,7 @@ function openEventTab(evId){
   selEvId=evId
   renderEvList()
 }
-function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=new Date().toISOString().slice(0,10);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
+function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
 function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
   const {evId,pi,field}=r.action
@@ -1442,7 +1443,7 @@ function renderEvList(){
     return map[title]||{left:'#888',bg:'#f8f8f8',text:'#444'};
   }
   function draw(){
-    const todayStr=new Date().toISOString().slice(0,10)
+    const todayStr=localDateStr()
     function buildEvCard(ev,isPastSection){
       const filteredPax=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})
       if(filteredPax.length===0)return''
@@ -2041,7 +2042,7 @@ function doImport(){
     if(!YEARS.includes(r.yr)&&r.yr){YEARS.push(r.yr);YEARS.sort()}
     const stage=r.stage||'エントリー'
     const hist=stage==='エントリー'?[{d:todayMD(),s:'エントリー',cur:true}]:[{d:todayMD(),s:'エントリー'},{d:todayMD(),s:stage,cur:true}]
-    const todayISO=new Date().toISOString().slice(0,10)
+    const todayISO=localDateStr()
     STUDENTS.push({id:nextId(STUDENTS),ln:nkc(r.ln),fn:nkc(r.fn),lk:nkc(r.lk||''),fk:nkc(r.fk||''),gender:r.gender||'男性',uni:nkc(r.uni||''),fac:nkc(r.fac||''),dept:nkc(r.dept||''),yr:r.yr,home:nkc(r.home||''),city:'',email:r.email||'',phone:r.phone||'—',media:r.media,stage,rank:r.rank||'B',user:'—',jobTags:[],axisTags:[],attrTags:[],memo:nkc(r.memo||''),lc:r.lc||todayISO,entryDate:todayISO,scheduling:false,sch:null,hist})
     ensureMedia(r.media)
     added++
