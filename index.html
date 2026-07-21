@@ -217,7 +217,7 @@ html,body{height:100%;overflow:hidden}
     <div class="f-2"><div class="f-row"><label class="f-lbl">姓</label><input class="f-inp" id="f-ln"></div><div class="f-row"><label class="f-lbl">名</label><input class="f-inp" id="f-fn"></div></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">セイ</label><input class="f-inp" id="f-lk"></div><div class="f-row"><label class="f-lbl">メイ</label><input class="f-inp" id="f-fk"></div></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">性別</label><select class="f-sel" id="f-gender"><option>男性</option><option>女性</option><option>その他</option><option>未回答</option></select></div><div class="f-row"><label class="f-lbl">卒業年度</label><select class="f-sel" id="f-yr"></select></div></div>
-    <div class="f-row"><label class="f-lbl">誕生日</label><input class="f-inp" id="f-bday" type="date" style="width:160px"></div>
+    <div class="f-row"><label class="f-lbl">誕生日</label><input class="f-inp" id="f-bday" type="text" placeholder="例: 11/24" maxlength="5" style="width:100px"></div>
     <div class="f-row"><label class="f-lbl">大学</label><input class="f-inp" id="f-uni"></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">学部</label><input class="f-inp" id="f-fac"></div><div class="f-row"><label class="f-lbl">学科</label><input class="f-inp" id="f-dept"></div></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">都道府県</label><input class="f-inp" id="f-home"></div><div class="f-row"><label class="f-lbl">市区町村</label><input class="f-inp" id="f-city"></div></div>
@@ -746,7 +746,7 @@ function openStuModal(data){
   document.getElementById('stu-modal-title').textContent=editStuId?'学生情報を編集':'学生を追加'
   document.getElementById('stu-submit-btn').textContent=editStuId?'保存する':'追加する'
   const fields=['ln','fn','lk','fk','uni','fac','dept','home','city','addr','email','phone','memo','bday']
-  if(data){fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=data[f]||''});document.getElementById('f-gender').value=data.gender||'男性';populateYrSel(data.yr||Math.max(...YEARS));buildMediaDDs();buildStaffDD();document.getElementById('f-media').value=data.media||MEDIAS[0]||'';document.getElementById('f-user').value=data.user||STAFF[0]||'';document.getElementById('f-rank').value=data.rank||'B+';resetTagGroups(data.jobTags||[],data.axisTags||[],data.attrTags||[])}
+  if(data){fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=data[f]||''});const bdayEl=document.getElementById('f-bday');if(data.bday&&data.bday.length===10)bdayEl.value=data.bday.slice(5).replace('-','/');document.getElementById('f-gender').value=data.gender||'男性';populateYrSel(data.yr||Math.max(...YEARS));buildMediaDDs();buildStaffDD();document.getElementById('f-media').value=data.media||MEDIAS[0]||'';document.getElementById('f-user').value=data.user||STAFF[0]||'';document.getElementById('f-rank').value=data.rank||'B+';resetTagGroups(data.jobTags||[],data.axisTags||[],data.attrTags||[])}
   else{fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=''});resetTagGroups();populateYrSel(Math.max(...YEARS))}
   document.getElementById('ov-student').classList.add('show')
 }
@@ -894,8 +894,14 @@ function autoFillSchTime(){
   const sel=document.getElementById('sch-title-sel').value
   const title=sel==='その他（自由入力）'?document.getElementById('sch-title-custom').value.trim():sel
   if(!date||!title)return
-  const ev=EVENTS.find(e=>e.date===date&&e.title===title)
-  if(ev&&ev.time)document.getElementById('sch-time').value=ev.time
+  const locDetail=(document.getElementById('sch-loc-detail').value||'').trim()
+  // 会場名が入力済みならそれも条件に、未入力なら最初のマッチを使用
+  const ev=EVENTS.find(e=>e.date===date&&e.title===title&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>e.date===date&&e.title===title)
+  if(ev){
+    if(ev.time)document.getElementById('sch-time').value=ev.time
+    if(!locDetail&&ev.locDetail)document.getElementById('sch-loc-detail').value=ev.locDetail
+    if(ev.loc){schLocType=ev.loc;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))}
+  }
 }
 function openScheduleModal(stuId,e){
   if(e)e.stopPropagation();schStuId=stuId;const s=STUDENTS.find(x=>x.id===stuId)
@@ -933,7 +939,7 @@ function saveSchedule(){
   const title=selVal==='その他（自由入力）'?document.getElementById('sch-title-custom').value:selVal
   const isSchFlag=document.getElementById('sch-scheduling').checked
   const date=isSchFlag?null:document.getElementById('sch-date').value;const time=isSchFlag?null:document.getElementById('sch-time').value;const locDetail=document.getElementById('sch-loc-detail').value
-  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail};s.scheduling=isSchFlag
+  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null};s.scheduling=isSchFlag
   // Move student to matching stage if title matches a pipeline column label
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
@@ -941,9 +947,9 @@ function saveSchedule(){
   if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
-    const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time)
-    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})}}
-    else{EVENTS.push({id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]})}
+    const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
+    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(s.sch)s.sch.evId=matchEv.id}
+    else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);if(s.sch)s.sch.evId=_nev.id}
   }
   toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
 }
@@ -1063,7 +1069,7 @@ function genReminders(){
   })
   const todayMM=String(today.getMonth()+1).padStart(2,'0'),todayDD=String(today.getDate()).padStart(2,'0')
   STUDENTS.forEach(s=>{if(!yrMatch(s))return;if(['辞退','不合格','内定辞退'].includes(s.stage))return
-    if(s.bday&&s.bday.slice(5)===`${todayMM}-${todayDD}`)reminders.push({name:`${s.ln} ${s.fn}`,text:`🎂 今日は誕生日です`,when:'今日',urgent:false,stuId:s.id})
+    const _bday=s.bday?(s.bday.length===10?s.bday.slice(5).replace('-','/'):s.bday):'';if(_bday===`${todayMM}/${todayDD}`)reminders.push({name:`${s.ln} ${s.fn}`,text:`🎂 今日は誕生日です`,when:'今日',urgent:false,stuId:s.id})
     if(!s.lc)reminders.push({name:`${s.ln} ${s.fn}`,text:'連絡記録なし — 初回フォロー',when:'—',urgent:false,stuId:s.id})
     else{const ds=dSince(s.lc);if(s.scheduling&&ds>=1)reminders.push({name:`${s.ln} ${s.fn}`,text:`日程調整中 — ${ds}日連絡なし`,when:`${ds}日前`,urgent:ds>=1,stuId:s.id});else if(!s.scheduling&&ds>=10)reminders.push({name:`${s.ln} ${s.fn}`,text:`最終連絡から${ds}日経過`,when:`${ds}日前`,urgent:ds>=10,stuId:s.id})}
   })
@@ -1166,7 +1172,7 @@ function selStu(id,refresh){
   const hasSch=s.sch?.date;const days=hasSch?dUntil(s.sch.date):null
   const schHTML=hasSch?`<div style="border-radius:7px;padding:9px 11px;font-size:12px;border:1px solid ${days<=3&&days>=0?'#f7c1c1':'#fac775'};background:${days<=3&&days>=0?'#fcebeb':'#faeeda'}"><div style="font-weight:500;margin-bottom:3px">${s.sch.title}</div><div style="font-size:11px;color:#888;display:flex;gap:8px"><span>${fmtDateW(s.sch.date)} ${s.sch.time}</span><span style="margin-left:auto;font-weight:600;color:${days<=3&&days>=0?'#a32d2d':'#633806'}">${days===0?'今日':days===1?'明日':days<0?`${-days}日前`:`あと${days}日`}</span></div></div>`:`<div style="border-radius:6px;padding:8px;background:#f7f7f7;border:1px solid #e5e5e5;font-size:12px;color:#999">未設定</div>`
   dp.innerHTML=`<div class="dp-hdr"><div><div style="font-size:14px;font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></div><div style="display:flex;gap:5px;align-items:center"><button class="btn sm" onclick="openStuModal(STUDENTS.find(x=>x.id==${id}))"><i class="ti ti-pencil"></i>編集</button><button style="border:none;background:none;cursor:pointer;color:#999;font-size:18px;line-height:1" onclick="selStu(${id})">×</button></div></div>
-  <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni}</div></div><div class="dp-row"><div class="dp-lbl">学部・学科</div><div>${s.fac}・${s.dept}</div></div><div class="dp-row"><div class="dp-lbl">卒業年度</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">誕生日</div><div>${s.bday?s.bday.slice(5).replace('-','/')+'（'+s.bday.slice(0,4)+'年生）':'—'}</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">住所</div><div><div>${s.home}${s.city?' '+s.city:''}</div><div style="font-size:11px;color:#555;margin-top:2px">${s.addr||''}</div></div></div><div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;color:#666;word-break:break-all">${s.email}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
+  <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni}</div></div><div class="dp-row"><div class="dp-lbl">学部・学科</div><div>${s.fac}・${s.dept}</div></div><div class="dp-row"><div class="dp-lbl">卒業年度</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">誕生日</div><div>${s.bday?(s.bday.length===10?s.bday.slice(5).replace('-','/'):s.bday):'—'}</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">住所</div><div><div>${s.home}${s.city?' '+s.city:''}</div><div style="font-size:11px;color:#555;margin-top:2px">${s.addr||''}</div></div></div><div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;color:#666;word-break:break-all">${s.email}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
   <div class="dp-sec"><div class="dp-st orange">タグ</div><div style="margin-bottom:5px"><div style="font-size:10px;color:#999;margin-bottom:3px">志望職種</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.jobTags||[]).map(t=>`<span class="tag-p" style="background:#e6f1fb;color:#0c447c;border-color:#b5d4f4">${t}</span>`).join('')||'<span style="font-size:11px;color:#ccc">未設定</span>'}</div></div><div><div style="font-size:10px;color:#999;margin-bottom:3px">属性</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.attrTags||[]).map(t=>`<span class="tag-p">${t}</span>`).join('')||'<span style="font-size:11px;color:#ccc">なし</span>'}</div></div></div>
   <div class="dp-sec"><div class="dp-st green">評価・状態</div><div class="dp-row"><div class="dp-lbl">ランク</div><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></div><div class="dp-row"><div class="dp-lbl">ステージ</div><span class="stg ${stgClass(s.stage)}">${s.stage}</span></div><div class="dp-row"><div class="dp-lbl">最終連絡</div><div style="display:flex;align-items:center;gap:5px"><input type="date" class="lc-input" value="${s.lc||''}" onchange="updateLC(${id},this.value)">${s.lc?`<span style="font-size:10px;${lcStyle(s)}">${dSince(s.lc)===0?'今日':dSince(s.lc)+'日前'}</span>`:''}</div></div><div class="dp-row"><div class="dp-lbl">担当者</div><div>${s.user}</div></div></div>
   <div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">次回予定</div><button class="btn sm" onclick="openScheduleModal(${id})"><i class="ti ti-calendar-plus"></i>${hasSch?'変更':'設定'}</button></div>${schHTML}</div>
@@ -1214,7 +1220,7 @@ function selPipeStu(id){
   <div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">次回予定</div><button class="btn sm" onclick="openScheduleModal(${id})"><i class="ti ti-calendar-plus"></i>${hasSch?'変更':'設定'}</button></div>${schHTML}</div>
   <div class="dp-sec"><div class="dp-st green">評価・状態</div><div class="dp-row"><div class="dp-lbl">ランク</div><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></div><div class="dp-row"><div class="dp-lbl">ステージ</div><span class="stg ${stgClass(s.stage)}">${s.stage}</span></div><div class="dp-row"><div class="dp-lbl">最終連絡</div><div style="display:flex;align-items:center;gap:5px"><input type="date" class="lc-input" value="${s.lc||''}" onchange="updateLC(${id},this.value)">${s.lc?`<span style="font-size:10px;${lcStyle(s)}">${dSince(s.lc)===0?'今日':dSince(s.lc)+'日前'}</span>`:''}</div></div></div>
   <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni||'—'}</div></div><div class="dp-row"><div class="dp-lbl">学部</div><div>${s.fac||'—'}</div></div><div class="dp-row"><div class="dp-lbl">卒年</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;word-break:break-all">${s.email||'—'}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
-  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const seen=new Set();const manHist=s.hist.filter(h=>{if(seen.has(h.s))return false;seen.add(h.s);return true}).reverse();return manHist.map(h=>{const matchEv=EVENTS.find(ev=>ev.title===h.s&&ev.pax.some(p=>p.stuId===s.id));const dateStr=matchEv?(matchEv.date||'').slice(5).replace('-','/'):h.d;return`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${dateStr}</div><div class="tl-s">${h.s}</div></div>`}).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
+  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{const seen=new Set();const _todayISO=new Date().toISOString().slice(0,10);const manHist=s.hist.filter(h=>{if(seen.has(h.s))return false;seen.add(h.s);const futureEv=EVENTS.find(ev=>ev.title===h.s&&ev.date>_todayISO&&ev.pax.some(p=>p.stuId===s.id));if(futureEv)return false;return true}).reverse();return manHist.map(h=>{const matchEv=(s.sch?.evId&&s.sch.title===h.s?EVENTS.find(ev=>ev.id===s.sch.evId):null)||EVENTS.find(ev=>ev.title===h.s&&ev.pax.some(p=>p.stuId===s.id));const dateStr=matchEv?(matchEv.date||'').slice(5).replace('-','/'):h.d;return`<div class="tl-item ${h.cur?'cur':''}"><div class="tl-d">${dateStr}</div><div class="tl-s">${h.s}</div></div>`}).join('')||'<div style="font-size:11px;color:#aaa">履歴なし</div>'})()}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><div class="memo">${s.memo||'（メモなし）'}</div></div>`
   renderKB()
 }
