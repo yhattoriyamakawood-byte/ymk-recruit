@@ -429,7 +429,7 @@ html,body{height:100%;overflow:hidden}
           <div style="flex:1"></div>
           <button class="btn" onclick="openImportModal()"><i class="ti ti-file-import"></i>インポート</button><button class="btn dk" onclick="openStuModal(null)"><i class="ti ti-plus"></i>追加</button>
         </div>
-        <div style="flex:1;overflow:auto;min-height:0"><table class="tbl"><thead><tr><th>氏名</th><th style="width:44px;text-align:center">資料</th><th>大学</th><th>居住地</th><th>卒年</th><th>媒体</th><th>ランク</th><th>次回予定</th><th>最終連絡</th><th>メモ</th></tr></thead><tbody id="s-body"></tbody></table></div>
+        <div style="flex:1;overflow:auto;min-height:0"><table class="tbl"><thead><tr><th>氏名</th><th style="width:44px;text-align:center">資料</th><th>次回予定</th><th>大学</th><th>居住地</th><th>卒年</th><th>媒体</th><th>ランク</th><th>最終連絡</th><th>メモ</th></tr></thead><tbody id="s-body"></tbody></table></div>
       </div>
       <div class="dp hide" id="dp"></div>
     </div>
@@ -674,7 +674,11 @@ let COMPANY_STAFF=[]
 let STAFF=[]
 let MEDIA_COSTS={} // {media: [{label:'プラン名',amount:0}, ...]}
 let remExpanded=false,evExpanded=false,schStuId=null,editStuId=null,schLocType='WEB',evLocType='WEB',_remCache=[],selPipeId=null,fazeMediaSel='全体',kbQuery=''
-const PDF_STORE={} // stuId -> {data, name, text, parsed}
+// Google Drive PDF config — set Client ID once for seamless picker experience
+// Setup: console.cloud.google.com → APIs & Services → Credentials → OAuth 2.0 Client ID (Web app)
+// Authorized JS origins: https://ymk-recruit.vercel.app
+let DRIVE_CLIENT_ID=localStorage.getItem('drive_client_id')||''
+let _driveToken=null,_driveTokenExpiry=0
 let GCAL_ACCOUNTS=[]
 let _gcalPending=null // {url} waiting for account selection
 let _undoStack=[],_redoStack=[]
@@ -1167,7 +1171,7 @@ function updateStageBtnLabel(){const lbl=document.getElementById('stage-filter-l
 function clearStageFilter(){sstage.clear();updateStageBtnLabel();renderStageChips();renderStu()}
 document.addEventListener('click',function(e){const wrap=document.getElementById('stage-filter-wrap');const menu=document.getElementById('stage-filter-menu');if(menu&&menu.style.display==='block'&&wrap&&!wrap.contains(e.target)){menu.style.display='none'}})
 function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(shideExit&&['辞退','不合格','内定辞退'].includes(s.stage))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage.size>0&&!sstage.has(s.stage))return false;return true})}
-function renderStu(){const _exitSt=['辞退','不合格','内定辞退'];const _ac=STUDENTS.filter(s=>yrMatch(s)&&!_exitSt.includes(s.stage)).length;const _badge=document.getElementById('active-count-badge');if(_badge)_badge.textContent=`アクティブ ${_ac}名`;document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td><div style="font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${PDF_STORE[s.id]?`<button onclick="openPdfModal(${s.id})" title="${PDF_STORE[s.id].name}" style="border:none;background:none;cursor:pointer;padding:2px;color:#e74c3c;font-size:16px"><i class="ti ti-file-type-pdf"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="PDFをアップロード" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div></td><td style="color:#999;font-size:11px">${s.yr}卒</td><td><span class="${mediaCls(s.media)}">${s.media}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td>${schChipHTML(s)}</td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
+function renderStu(){const _exitSt=['辞退','不合格','内定辞退'];const _ac=STUDENTS.filter(s=>yrMatch(s)&&!_exitSt.includes(s.stage)).length;const _badge=document.getElementById('active-count-badge');if(_badge)_badge.textContent=`アクティブ ${_ac}名`;document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td><div style="font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${s.driveFileId?`<button onclick="openPdfModal(${s.id})" title="${s.driveName||'PDF資料'}" style="border:none;background:none;cursor:pointer;padding:2px;color:#4285f4;font-size:16px"><i class="ti ti-brand-google-drive"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="Driveから資料を連携" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td>${schChipHTML(s)}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div>${s.homeR&&s.homeR!==s.home?`<div style="font-size:9px;color:#e67e22;margin-top:1px"><i class="ti ti-home" style="font-size:9px"></i> 帰省先あり</div>`:''}</td><td style="color:#999;font-size:11px">${s.yr}卒</td><td><span class="${mediaCls(s.media)}">${s.media}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
 
 function selStu(id,refresh){
   if(selId===id&&!refresh){selId=null;document.getElementById('dp').classList.add('hide');renderStu();return}
@@ -2048,20 +2052,6 @@ function doImport(){
   toast(`${added}名を追加しました${skipped>0?'（'+skipped+'名は重複スキップ）':''}`)
 }
 
-function _pdfSecHTML(id){
-  const store=PDF_STORE[id]
-  const upBtn='<button class="btn sm" onclick="uploadStuPdf('+id+')"><i class="ti ti-upload"></i>'+(store?'差し替え':'アップロード')+'</button>'
-  let inner=''
-  if(store){
-    const parsedHTML=store.parsed&&Object.keys(store.parsed).length?
-      Object.entries(store.parsed).slice(0,4).map(([k,v])=>'<div style="margin-bottom:7px"><div style="font-size:10px;font-weight:600;color:#888;margin-bottom:2px">'+k+'</div><div style="font-size:11px;color:#444;line-height:1.6">'+v.slice(0,120).replace(/</g,'&lt;')+(v.length>120?'…':'')+'</div></div>').join('')
-      :'<div style="font-size:11px;color:#bbb">テキスト抽出中...</div>'
-    inner='<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg2);border-radius:6px;margin-bottom:8px"><i class="ti ti-file-type-pdf" style="color:#e74c3c;font-size:16px;flex-shrink:0"></i><span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">'+store.name+'</span><button class="btn sm" onclick="openPdfModal('+id+')">プレビュー</button><button onclick="deleteStuPdf('+id+')" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:14px;padding:2px" onmouseover="this.style.color=\x27#e74c3c\x27" onmouseout="this.style.color=\x27#ccc\x27">×</button></div>'+parsedHTML
-  } else {
-    inner='<div style="font-size:11px;color:#bbb;padding:4px 0">資料なし</div>'
-  }
-  return '<div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">PDF資料</div>'+upBtn+'</div>'+inner+'</div>'
-}
 // ===== GCAL ACCOUNT PICKER =====
 function _openGcalUrl(url){
   _gcalPending=url
@@ -2097,156 +2087,121 @@ function _gcalAcctSelect(acct){
   window.open(url,'_blank')
 }
 // ============================
-// ===== PDF FEATURE =====
-let _pdfModalId=null
-
-async function _loadPdfJs(){
-  if(window.pdfjsLib)return
-  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+// ===== GOOGLE DRIVE PDF FEATURE =====
+async function _loadGIS(){
+  if(window.google?.accounts?.oauth2)return
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=res;s.onerror=rej;document.head.appendChild(s)})
+}
+async function _loadPickerAPI(){
+  if(window.google?.picker)return
+  await new Promise((res,rej)=>{
+    const s=document.createElement('script');s.src='https://apis.google.com/js/api.js'
+    s.onload=()=>{gapi.load('picker',{callback:res,onerror:rej})};s.onerror=rej
+    document.head.appendChild(s)
+  })
+}
+async function _getDriveToken(){
+  await _loadGIS()
+  if(_driveToken&&Date.now()<_driveTokenExpiry)return _driveToken
+  return new Promise((resolve,reject)=>{
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:DRIVE_CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/drive.file',
+      callback:(resp)=>{
+        if(resp.error)return reject(resp.error)
+        _driveToken=resp.access_token
+        _driveTokenExpiry=Date.now()+((resp.expires_in||3500)-60)*1000
+        resolve(_driveToken)
+      }
+    })
+    client.requestAccessToken()
+  })
 }
 
-function uploadStuPdf(id){
-  const inp=document.createElement('input');inp.type='file';inp.accept='.pdf'
-  inp.onchange=async e=>{
-    const file=e.target.files[0];if(!file)return
-    if(file.size>20*1024*1024){toast('20MB以下のPDFをアップロードしてください');return}
-    const reader=new FileReader()
-    reader.onload=async ev=>{
-      PDF_STORE[id]={data:ev.target.result,name:file.name,text:null,parsed:null}
-      toast(file.name+' をアップロードしました')
-      selStu(id,true)
-      await _extractPdfText(id)
-      selStu(id,true)
+function _driveUrlFallback(id){
+  const url=prompt('GoogleドライブのPDF共有URLを貼り付けてください：\n\n手順: DriveでPDFを右クリック →「共有」→「リンクを知っている全員」→「リンクをコピー」')
+  if(!url)return
+  const m=url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+  if(!m){toast('有効なGoogle Drive URLを入力してください');return}
+  const s=STUDENTS.find(x=>x.id===id)
+  if(s){s.driveFileId=m[1];s.driveName='PDF資料';scheduleSave();renderStu();selStu(id,true);toast('Drive資料を連携しました')}
+}
+
+async function uploadStuPdf(id){
+  if(!DRIVE_CLIENT_ID){
+    // No Client ID configured — offer setup or URL fallback
+    const choice=confirm('Googleドライブ連携の設定がされていません。\n\n【OK】Client IDを設定する（推奨・ワンクリック連携）\n【キャンセル】Drive共有URLを手動で貼り付ける')
+    if(choice){
+      const cid=prompt('Google Cloud ConsoleのOAuth 2.0 クライアントID（ウェブアプリ）を入力してください：\n\nhttps://console.cloud.google.com\n→ APIとサービス → 認証情報 → OAuth 2.0 クライアントID作成\n→ 承認済みJavaScriptオリジンに「https://ymk-recruit.vercel.app」を追加')
+      if(cid&&cid.trim()){
+        DRIVE_CLIENT_ID=cid.trim()
+        localStorage.setItem('drive_client_id',DRIVE_CLIENT_ID)
+        toast('Client IDを保存しました。もう一度「連携」を押してください')
+      }
+      return
     }
-    reader.readAsDataURL(file)
+    _driveUrlFallback(id);return
   }
-  inp.click()
+  try{
+    toast('Googleアカウントに接続中...')
+    const [token]=await Promise.all([_getDriveToken(),_loadPickerAPI()])
+    new google.picker.PickerBuilder()
+      .addView(new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes('application/pdf').setIncludeFolders(true))
+      .addView(new google.picker.DocsUploadView().setIncludeFolders(true))
+      .setOAuthToken(token)
+      .setTitle('PDF資料を選択またはアップロード')
+      .setCallback(data=>{
+        if(data[google.picker.Response.ACTION]!==google.picker.Action.PICKED)return
+        const file=data[google.picker.Response.DOCUMENTS][0]
+        const s=STUDENTS.find(x=>x.id===id)
+        if(s){
+          s.driveFileId=file[google.picker.Document.ID]
+          s.driveName=file[google.picker.Document.NAME]
+          scheduleSave();renderStu();selStu(id,true)
+          toast((s.driveName||'PDF')+'を連携しました')
+        }
+      })
+      .build().setVisible(true)
+  }catch(err){
+    console.error('Drive error:',err)
+    if(String(err).includes('popup')||String(err).includes('blocked')){
+      toast('ポップアップがブロックされました。ブラウザの設定で許可してください')
+    }else{
+      toast('Drive接続エラー。URLを手動入力に切り替えます')
+      _driveUrlFallback(id)
+    }
+  }
 }
 
 function deleteStuPdf(id){
-  if(!confirm('PDF資料を削除しますか？'))return
-  delete PDF_STORE[id];selStu(id,true);toast('資料を削除しました')
-}
-
-async function _extractPdfText(id){
-  const store=PDF_STORE[id];if(!store)return
-  try{
-    await _loadPdfJs()
-    const raw=atob(store.data.split(',')[1])
-    const arr=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i)
-    const pdf=await pdfjsLib.getDocument({data:arr}).promise
-    let full=''
-    for(let p=1;p<=pdf.numPages;p++){
-      const page=await pdf.getPage(p)
-      const tc=await page.getTextContent()
-      const lines=[]
-      tc.items.forEach(item=>{
-        const y=Math.round(item.transform[5])
-        const ex=lines.find(l=>Math.abs(l.y-y)<8)
-        if(ex)ex.txt+=' '+item.str
-        else lines.push({y,txt:item.str})
-      })
-      lines.sort((a,b)=>b.y-a.y)
-      full+=lines.map(l=>l.txt.trim()).filter(t=>t).join('\n')+'\n\n'
-    }
-    store.text=full.trim()
-    store.parsed=_parsePdf(full)
-  }catch(err){console.error('PDF extract:',err);store.text='[テキスト抽出エラー]';store.parsed={}}
-}
-
-function _parsePdf(text){
-  const sections={}
-  // Detect section headers (lines that end in colon, or are known keywords)
-  const KEYS=['自己PR','志望動機','志望理由','ガクチカ','学生時代に力を入れたこと','趣味','特技','アルバイト','部活','サークル','研究','資格','語学','強み','長所','短所','将来','インターン']
-  const lines=text.split('\n')
-  let cur=null,buf=[]
-  lines.forEach(line=>{
-    const trimmed=line.trim()
-    if(!trimmed){if(cur&&buf.length){sections[cur]=(sections[cur]||'')+buf.join(' ').trim()+'\n';buf=[]}return}
-    const matchedKey=KEYS.find(k=>trimmed.startsWith(k))
-    if(matchedKey||trimmed.match(/^[一-龥]{2,8}[：:]\s*/)){
-      if(cur&&buf.length)sections[cur]=(sections[cur]||'')+buf.join(' ').trim()
-      cur=matchedKey||trimmed.split(/[：:]/)[0]
-      const rest=trimmed.replace(new RegExp('^'+cur+'[：:\s]*'),'')
-      buf=rest?[rest]:[]
-    } else if(cur){
-      buf.push(trimmed)
-    }
-  })
-  if(cur&&buf.length)sections[cur]=(sections[cur]||'')+buf.join(' ').trim()
-  return sections
+  if(!confirm('資料の連携を解除しますか？\n（Googleドライブのファイル自体は削除されません）'))return
+  const s=STUDENTS.find(x=>x.id===id)
+  if(s){delete s.driveFileId;delete s.driveName;scheduleSave();renderStu();selStu(id,true)}
+  toast('資料の連携を解除しました')
 }
 
 function openPdfModal(id){
-  const store=PDF_STORE[id];if(!store)return
-  _pdfModalId=id
-  const s=STUDENTS.find(x=>x.id===id)
-  document.getElementById('pdf-modal-title').textContent=(s?s.ln+' '+s.fn+' — ':'')+store.name
+  const s=STUDENTS.find(x=>x.id===id);if(!s?.driveFileId)return
+  document.getElementById('pdf-modal-title').textContent=(s.ln+' '+s.fn+' — ')+(s.driveName||'PDF資料')
+  document.getElementById('pdf-iframe-wrap').innerHTML=`<iframe src="https://drive.google.com/file/d/${s.driveFileId}/preview" style="width:100%;height:100%;border:none" allow="autoplay"></iframe>`
   document.getElementById('ov-pdf').classList.add('show')
-  showPdfTab('prev')
 }
 
-function showPdfTab(tab){
-  document.getElementById('pdf-tab-prev').classList.toggle('on',tab==='prev')
-  document.getElementById('pdf-tab-info').classList.toggle('on',tab==='info')
-  document.getElementById('pdf-preview-wrap').style.display=tab==='prev'?'':'none'
-  document.getElementById('pdf-info-wrap').style.display=tab==='info'?'':'none'
-  if(tab==='prev')_renderPdfCanvas(_pdfModalId)
-  if(tab==='info')_renderPdfInfo(_pdfModalId)
+function _pdfSecHTML(id){
+  const s=STUDENTS.find(x=>x.id===id)
+  const hasPdf=!!s?.driveFileId
+  const upBtn=`<button class="btn sm" onclick="uploadStuPdf(${id})"><i class="ti ti-brand-google-drive"></i>${hasPdf?'差し替え':'連携'}</button>`
+  const inner=hasPdf
+    ?`<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg2);border-radius:6px">
+        <i class="ti ti-brand-google-drive" style="color:#4285f4;font-size:16px;flex-shrink:0"></i>
+        <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555">${s.driveName||'PDF資料'}</span>
+        <button class="btn sm" onclick="openPdfModal(${id})">プレビュー</button>
+        <button onclick="deleteStuPdf(${id})" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:14px;padding:2px" onmouseover="this.style.color='#e74c3c'" onmouseout="this.style.color='#ccc'">×</button>
+      </div>`
+    :'<div style="font-size:11px;color:#bbb;padding:4px 0">資料なし</div>'
+  return '<div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="dp-st" style="margin-bottom:0">PDF資料</div>'+upBtn+'</div>'+inner+'</div>'
 }
-
-async function _renderPdfCanvas(id){
-  const store=PDF_STORE[id];if(!store)return
-  const wrap=document.getElementById('pdf-canvas-wrap')
-  wrap.innerHTML='<div style="text-align:center;padding:40px;color:#999;font-size:13px">PDFを読み込み中...</div>'
-  try{
-    await _loadPdfJs()
-    const raw=atob(store.data.split(',')[1])
-    const arr=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i)
-    const pdf=await pdfjsLib.getDocument({data:arr}).promise
-    wrap.innerHTML=''
-    for(let p=1;p<=pdf.numPages;p++){
-      const page=await pdf.getPage(p)
-      const vp=page.getViewport({scale:1.5})
-      const canvas=document.createElement('canvas')
-      canvas.width=vp.width;canvas.height=vp.height
-      canvas.style.cssText='display:block;margin:0 auto 12px;max-width:100%;border:1px solid var(--bd);border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.1)'
-      wrap.appendChild(canvas)
-      await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise
-    }
-  }catch(err){wrap.innerHTML='<div style="color:#e74c3c;padding:16px;font-size:12px">エラー: '+err.message+'</div>'}
-}
-
-function _renderPdfInfo(id){
-  const store=PDF_STORE[id];if(!store)return
-  const wrap=document.getElementById('pdf-info-wrap')
-  if(!store.text){
-    wrap.innerHTML='<div style="color:#999;padding:24px;text-align:center;font-size:13px">テキスト抽出中...</div>'
-    _extractPdfText(id).then(()=>_renderPdfInfo(id));return
-  }
-  const parsed=store.parsed||{}
-  const SEC_COLORS={'自己PR':'#1a6fa8','志望動機':'#2d7a4f','志望理由':'#2d7a4f','ガクチカ':'#7a4a1a','学生時代に力を入れたこと':'#7a4a1a','趣味':'#6a2d8a','特技':'#6a2d8a','強み':'#c47000','長所':'#c47000'}
-  const cards=Object.entries(parsed).map(([k,v])=>{
-    const col=SEC_COLORS[k]||'#555'
-    return`<div style="margin-bottom:10px;padding:10px 12px;border:1px solid var(--bd);border-radius:6px;border-left:3px solid ${col}">
-      <div style="font-size:10px;font-weight:700;color:${col};margin-bottom:5px;letter-spacing:.5px">${k}</div>
-      <div style="font-size:12px;line-height:1.7;white-space:pre-wrap;color:#333">${v.slice(0,500).replace(/</g,'&lt;')}${v.length>500?'…':''}</div>
-    </div>`
-  }).join('')
-  wrap.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;height:100%;box-sizing:border-box">
-      <div style="overflow:auto">
-        <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">抽出フィールド</div>
-        ${cards||'<div style="color:#aaa;font-size:12px;padding:12px 0">セクションを検出できませんでした。<br>全文テキストをご確認ください。</div>'}
-      </div>
-      <div style="overflow:auto">
-        <div style="font-size:11px;font-weight:700;color:#999;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">全文テキスト</div>
-        <div style="font-size:11px;line-height:1.8;white-space:pre-wrap;background:var(--bg2);padding:12px;border-radius:6px;color:#444">${(store.text||'').replace(/</g,'&lt;')}</div>
-      </div>
-    </div>`
-}
-// ===== END PDF FEATURE =====
+// ===== END DRIVE PDF FEATURE =====
 
 // Restore UI preferences from localStorage
 try{const sy=localStorage.getItem('crm_selYears');if(sy){const arr=JSON.parse(sy);selYears.clear();arr.forEach(y=>selYears.add(y))}}catch(e){}
@@ -2256,14 +2211,9 @@ syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD();renderDash();ren
 document.addEventListener('DOMContentLoaded',_initApp)
 </script>
 <div class="ov" id="ov-pdf" onclick="if(event.target===this)closeModal('ov-pdf')">
-  <div class="modal" style="width:900px;max-width:96vw;height:88vh;max-height:88vh;display:flex;flex-direction:column">
+  <div class="modal" style="width:960px;max-width:96vw;height:90vh;max-height:90vh;display:flex;flex-direction:column">
     <div class="m-hdr"><span class="m-ttl" id="pdf-modal-title">PDF資料</span><button class="m-x" onclick="closeModal('ov-pdf')">×</button></div>
-    <div style="display:flex;border-bottom:1px solid var(--bd);flex-shrink:0;padding:0 4px">
-      <button class="pdf-tab on" id="pdf-tab-prev" onclick="showPdfTab('prev')">プレビュー</button>
-      <button class="pdf-tab" id="pdf-tab-info" onclick="showPdfTab('info')">抽出情報</button>
-    </div>
-    <div id="pdf-preview-wrap" style="flex:1;overflow:auto;padding:16px;background:var(--bg2)"><div id="pdf-canvas-wrap"></div></div>
-    <div id="pdf-info-wrap" style="display:none;flex:1;overflow:auto;padding:16px"></div>
+    <div id="pdf-iframe-wrap" style="flex:1;overflow:hidden;background:#f5f5f5"></div>
   </div>
 </div>
 <div class="ov" id="ov-gcal-acct" onclick="if(event.target===this)closeModal('ov-gcal-acct')">
