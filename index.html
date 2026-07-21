@@ -732,7 +732,7 @@ function rateBg(r){if(r>=70)return'#c0dd97';if(r>=50)return'#fac775';return'#f7a
 function rateColor(r){if(r>=70)return'#27500a';if(r>=50)return'#ba7517';return'#a32d2d'}
 function setSchLoc(v,el){schLocType=v;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x===el))}
 function setEvLoc(v,el){evLocType=v;document.querySelectorAll('#ev-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x===el))}
-function onSchTitleChange(){const v=document.getElementById('sch-title-sel').value;document.getElementById('sch-custom-row').style.display=v==='その他（自由入力）'?'block':'none'}
+function onSchTitleChange(){const v=document.getElementById('sch-title-sel').value;document.getElementById('sch-custom-row').style.display=v==='その他（自由入力）'?'block':'none';autoFillSchTime()}
 function getCur(){return document.querySelector('.sc.on')?.id?.replace('sc-','')}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function toast(msg,dur=2500){const t=document.getElementById('toast');t.innerHTML=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',dur)}
