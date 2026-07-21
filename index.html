@@ -107,7 +107,7 @@ html,body{height:100%;overflow:hidden}
 .kb-col.dov{outline:2px solid #4a90d9;outline-offset:-2px;background:#eef6ff}
 .kb-col.offer-col.dov{outline-color:#3b6d11;background:#e0f5d0}
 .kb-col.exit-col.dov{outline-color:#a32d2d;background:#fce8e8}
-.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:4px;border:1px solid var(--bd);border-bottom:none;color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0;white-space:nowrap;overflow:hidden;background:var(--bg2);}
+.kb-hdr{padding:7px 9px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:4px;border:1px solid var(--bd);border-bottom:none;color:var(--tx2);flex-shrink:0;border-radius:6px 6px 0 0;white-space:nowrap;overflow:visible;background:var(--bg2);}
 .kb-hdr.offer-hdr{background:#eaf3de;color:#27500a;border-color:#c0dd97}
 .kb-hdr.follow-hdr{background:#faeeda;color:#633806;border-color:#fac775}
 .kb-hdr.exit-hdr{background:#fdf0f0;color:#a32d2d;border-color:#f0cece}
@@ -1109,6 +1109,8 @@ function stgClass(stage){
   }
   return m[stage]||'stg-entry'
 }
+const MEDIA_ABBR={'キャリアチケット':'キャリチケ','ジールキャリア':'ジール'}
+function dispMedia(m){return MEDIA_ABBR[m]||m}
 function mediaCls(media){
   if(!media)return'mp-other tag-p'
   const m=media.toLowerCase()
@@ -1169,7 +1171,7 @@ function updateStageBtnLabel(){const lbl=document.getElementById('stage-filter-l
 function clearStageFilter(){sstage.clear();updateStageBtnLabel();renderStageChips();renderStu()}
 document.addEventListener('click',function(e){const wrap=document.getElementById('stage-filter-wrap');const menu=document.getElementById('stage-filter-menu');if(menu&&menu.style.display==='block'&&wrap&&!wrap.contains(e.target)){menu.style.display='none'}})
 function filtered(){return STUDENTS.filter(s=>{if(!yrMatch(s))return false;if(shideExit&&['辞退','不合格','内定辞退'].includes(s.stage))return false;if(syr&&s.yr!==syr)return false;if(sqry){const norm=v=>(v||'').normalize('NFKC').toLowerCase();const h=[s.ln,s.fn,s.lk,s.fk].filter(Boolean).map(norm).join(' ');const h2=norm(s.ln)+norm(s.fn);const terms=sqry.normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);return terms.every(t=>h.includes(t)||h2.includes(t))};if(smedia&&s.media!==smedia)return false;if(sstage.size>0&&!sstage.has(s.stage))return false;return true})}
-function renderStu(){const _exitSt=['辞退','不合格','内定辞退'];const _ac=STUDENTS.filter(s=>yrMatch(s)&&!_exitSt.includes(s.stage)).length;const _badge=document.getElementById('active-count-badge');if(_badge)_badge.textContent=`アクティブ ${_ac}名`;document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td><div style="font-weight:500">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${s.driveFileId?`<button onclick="openPdfModal(${s.id})" title="${s.driveName||'PDF資料'}" style="border:none;background:none;cursor:pointer;padding:2px;color:#4285f4;font-size:16px"><i class="ti ti-brand-google-drive"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="Driveから資料を連携" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td>${schChipHTML(s)}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div>${s.homeR&&s.homeR!==s.home?`<div style="font-size:9px;color:#e67e22;margin-top:1px"><i class="ti ti-home" style="font-size:9px"></i> 帰省先あり</div>`:''}</td><td style="color:#999;font-size:11px">${s.yr}卒</td><td><span class="${mediaCls(s.media)}">${s.media}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
+function renderStu(){const _exitSt=['辞退','不合格','内定辞退'];const _ac=STUDENTS.filter(s=>yrMatch(s)&&!_exitSt.includes(s.stage)).length;const _badge=document.getElementById('active-count-badge');if(_badge)_badge.textContent=`アクティブ ${_ac}名`;document.getElementById('s-body').innerHTML=filtered().map(s=>`<tr onclick="selStu(${s.id})" class="${selId===s.id?'sel':''}"><td style="white-space:nowrap;max-width:88px;overflow:hidden" title="${s.ln} ${s.fn}　${s.lk} ${s.fk}"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999;overflow:hidden;text-overflow:ellipsis">${s.lk} ${s.fk}</div></td><td style="text-align:center;width:44px" onclick="event.stopPropagation()">${s.driveFileId?`<button onclick="openPdfModal(${s.id})" title="${s.driveName||'PDF資料'}" style="border:none;background:none;cursor:pointer;padding:2px;color:#4285f4;font-size:16px"><i class="ti ti-brand-google-drive"></i></button>`:`<button onclick="uploadStuPdf(${s.id})" title="Driveから資料を連携" style="border:none;background:none;cursor:pointer;padding:2px;color:#ccc;font-size:15px"><i class="ti ti-upload"></i></button>`}</td><td>${schChipHTML(s)}</td><td><div style="font-size:11px">${s.uni}</div><div style="font-size:10px;color:#999">${s.fac}</div></td><td><div style="font-size:11px">${s.home}</div><div style="font-size:10px;color:#999">${s.city||''}</div>${s.homeR&&s.homeR!==s.home?`<div style="font-size:9px;color:#e67e22;margin-top:1px"><i class="ti ti-home" style="font-size:9px"></i> 帰省先あり</div>`:''}</td><td style="color:#999;font-size:11px">${s.yr}卒</td><td style="white-space:nowrap"><span class="${mediaCls(s.media)}">${dispMedia(s.media)}</span></td><td><span class="rk ${RKMAP[s.rank]}">${s.rank}</span></td><td onclick="event.stopPropagation()"><input type="date" class="tbl-date" style="${lcStyle(s)}" value="${s.lc||''}" onchange="updateLC(${s.id},this.value)"></td><td onclick="event.stopPropagation()"><input class="tbl-inp" value="${(s.memo||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" placeholder="メモ" onchange="updateMemo(${s.id},this.value)"></td></tr>`).join('')}
 
 function selStu(id,refresh){
   if(selId===id&&!refresh){selId=null;document.getElementById('dp').classList.add('hide');renderStu();return}
@@ -1289,7 +1291,7 @@ function renderKB(){
       const cards=kbData[col.id]||[]
       const hdrEl=document.createElement('div')
       hdrEl.className='kb-hdr'+(sec.cls==='offer'?' offer-hdr':sec.cls==='follow'?' follow-hdr':sec.cls==='exit'?' exit-hdr':'')
-      hdrEl.innerHTML=`${col.lbl}<span class="kb-cnt">${cards.length}</span>`
+      hdrEl.innerHTML=`<span style="overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1">${col.lbl}</span><span class="kb-cnt" style="flex-shrink:0">${cards.length}</span>`
       hdrRow.appendChild(hdrEl)
     })
   })
