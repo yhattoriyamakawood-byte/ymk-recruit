@@ -1651,22 +1651,22 @@ function addAnalMedia(){
 function addMediaCost(media){
   if(!MEDIA_COSTS[media])MEDIA_COSTS[media]=[]
   MEDIA_COSTS[media].push({label:'',amount:0})
-  renderAnal()
+  scheduleSave();renderAnal()
 }
 function removeMediaCost(media,idx){
   if(!MEDIA_COSTS[media])return
   MEDIA_COSTS[media].splice(idx,1)
-  renderAnal()
+  scheduleSave();renderAnal()
 }
 function updateMediaCostLabel(media,idx,val){
   if(!MEDIA_COSTS[media])return
   MEDIA_COSTS[media][idx].label=val
-  renderAnal()
+  scheduleSave()
 }
 function updateMediaCostAmount(media,idx,val){
   if(!MEDIA_COSTS[media])return
   MEDIA_COSTS[media][idx].amount=parseInt(val.replace(/[^0-9]/g,''))||0
-  renderAnal()
+  scheduleSave()
 }
 let _analDragIdx=null
 function _analDragStart(e,idx){_analDragIdx=idx;e.currentTarget.style.opacity='0.4'}
