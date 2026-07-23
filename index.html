@@ -1452,6 +1452,24 @@ function declineStu(id,e){
   refreshAll()
   toast(`${s.ln} ${s.fn} → 「辞退」`)
 }
+function copyGwMail(evId,e){
+  if(e)e.stopPropagation()
+  const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
+  const d=new Date(ev.date+'T00:00:00')
+  const month=d.getMonth()+1
+  const day=d.getDate()
+  const weekday=['日','月','火','水','木','金','土'][d.getDay()]
+  const dateStr=`${month}月${day}日（${weekday}）`
+  const isWeb=ev.loc==='WEB'
+  const kaiSai=isWeb
+    ?`【開催】zoomで行います。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
+    :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44-2）\r\n 本社横のビル1階`
+  const text=`先ほどはありがとうございました。 \r\nご予約いただいた次回イベントの案内連絡です！\r\n\r\n  【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～　　：　　\r\n※5分前には集合をお願いします。 \r\n${kaiSai}\r\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \r\n 受検URL：\thttps://tracs.jp \r\n受検ID： \r\n受験パスワード： \r\n －－－－－－－－－－－－－－－ \r\n 以上となります。 \r\nそれでは今後とも、よろしくお願いします！`
+  navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)}).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)
+  })
+}
+
 function renderEvList(){
   const MAX_PAST=3
   function evTypeColor(title){
@@ -1499,7 +1517,8 @@ function renderEvList(){
       }).join('')
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
       const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto" onclick="event.stopPropagation()">${paxBody}</div>`:''
-      const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="openGcalTask(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button></div>`
+      const gwMailBtn=ev.title==='グループワーク'?`<button title="案内メールをコピー" onclick="copyGwMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #a855f7;border-radius:4px;background:#fff;color:#a855f7;cursor:pointer;white-space:nowrap">📋 メール</button>`:''
+      const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="openGcalTask(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button>${gwMailBtn}</div>`
       const titleColor=isPastSection?'color:#999;':`color:${tc.text};`;
       const dotColor=isPastSection?'#bbb':tc.left;
       return`<div class="ev-card ${selEvId===ev.id?'on':''}" style="${alertStyle}${cardBg}"><div class="ev-card-hdr" onclick="toggleEvCard(${ev.id})"><div style="display:flex;align-items:center;gap:10px"><div class="date-badge" style="${dateBadgeStyle}"><div class="date-m">${dt.m}</div><div class="date-d">${dt.d}</div><div class="date-w">${dt.w}</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;${titleColor}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>${ev.title}${alertBadge}</div><div style="display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#bbb">${ev.time}</span><span style="font-size:9px;color:#bbb">${ev.loc==='WEB'?'WEB':ev.locDetail||ev.loc}</span><span style="font-size:9px;color:#bbb">${filteredPax.length}名</span>${ev.staff&&ev.staff.length?'<span style="font-size:9px;background:#f0f0f0;color:#555;border-radius:8px;padding:1px 6px">'+ev.staff.join('・')+'</span>':''}</div></div>${gcalBtns}<i class="ti ti-chevron-${selEvId===ev.id?'up':'down'}" style="font-size:14px;color:#999;margin-left:6px"></i></div></div>${expandedSection}
