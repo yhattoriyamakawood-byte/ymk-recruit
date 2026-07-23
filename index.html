@@ -1494,6 +1494,54 @@ function copyInternMail(evId,e){
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}インターン案内をコピーしました`)
   })
 }
+function copyFinalInterviewMail(evId,e){
+  if(e)e.stopPropagation()
+  const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
+  const d=new Date(ev.date+'T00:00:00')
+  const month=d.getMonth()+1
+  const day=d.getDate()
+  const weekday=['日','月','火','水','木','金','土'][d.getDay()]
+  const dateStr=`${month}月${day}日（${weekday}）`
+  const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
+  const endH=_h+1
+  const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
+  const text=`お世話になっております。\r\n ヤマカ木材採用担当の服部です。 \r\n\r\n 最終選考の日程が決まりましたので、案内をお送りします。 \r\nご確認よろしくお願いいたします。\r\n\r\n  【イベント名】最終面接 \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime} \r\n※10分前には集合をお願いします。 \r\n【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \r\n白い２階建ての建物 \r\n【服装】スーツ\r\n【宿題】キャリアビジョンシート（最新の状態に更新し、前回同様ファイル登録情報からアップロードをお願いします）\r\n 【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \r\n\r\n また、最終選考は社長に逆質問できる貴重な機会でもありますので、何かお聞きしたいことを事前にいくつか考えておいて頂ければと思います。\r\n\r\n  以上となります。 \r\nそれでは最後の選考も頑張ってください！ \r\n\r\n よろしくお願いいたします。 \r\n\r\n －－－－－－－－－－－－－－－\r\n ◣重要◥\r\n今回は中途スタッフのインタビュー動画です！ \r\n他社経験者から見たヤマカ木材の特徴が知れるので、ぜひご覧下さい！\r\n\r\n  《中途インタビュー》\r\n https://www.youtube.com/watch?v=ay3420yELFw \r\n －－－－－－－－－－－－－－－`
+  navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接案内をコピーしました')}).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接案内をコピーしました')
+  })
+}
+function copyFinalInterviewRemindMail(evId,e){
+  if(e)e.stopPropagation()
+  const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
+  const d=new Date(ev.date+'T00:00:00')
+  const month=d.getMonth()+1
+  const day=d.getDate()
+  const weekday=['日','月','火','水','木','金','土'][d.getDay()]
+  const dateStr=`${month}月${day}日（${weekday}）`
+  const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
+  const endH=_h+1
+  const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
+  const text=`お世話になっております。 \r\nヤマカ木材の服部です。 \r\n\r\n 最終選考が近づいてきましたので、再度案内をお送りします。 \r\n\r\n 【イベント名】最終選考 \r\n【日程】${dateStr} \r\n【時間】${ev.time}～${endTime}\r\n※10分前には集合をお願いします。\r\n 【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \r\n白い２階建ての建物 \r\n【服装】スーツ\r\n 【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください） \r\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \r\n\r\n また以前もお伝えしましたように、面接には逆質問の時間がございます。 \r\nあらかじめ2、3個考えておいてください。 \r\n\r\n それでは以上となります。 \r\n\r\n 当日は何で来るかな？ \r\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！ \r\n\r\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！`
+  navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接リマインドをコピーしました')}).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接リマインドをコピーしました')
+  })
+}
+function copyRc1RemindMail(evId,e){
+  if(e)e.stopPropagation()
+  const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
+  const d=new Date(ev.date+'T00:00:00')
+  const month=d.getMonth()+1
+  const day=d.getDate()
+  const weekday=['日','月','火','水','木','金','土'][d.getDay()]
+  const dateStr=`${month}月${day}日（${weekday}）`
+  const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
+  const endH=_h+1
+  const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
+  const text=`ヤマカ木材の服部です！\r\n\r\n面談の日程が近づいてきましたので、再度案内をお送りします。\r\n ご確認よろしくお願いいたします。 \r\n\r\n 【イベント名】リクルータ面談 \r\n【日程】${dateStr} \r\n【時間】${ev.time}～${endTime}\r\n【内容】選考企業の整理、次回選考の準備 \r\n【開催】zoomで行います。5分ほど前にご入室ください。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 \r\n【服装】私服で大丈夫です \r\n【持ち物】筆記用具、メモ帳 \r\n\r\n【準備】 \r\n⑴ キャリアビジョンシートのアップロード\r\n（面談の3日前までにアップロードをお願いします）\r\n\r\n  ⑵ 下記の回答準備\r\n  ①強み、弱み　②志望動機　③就活の軸　④学生時代力を入れたこと　⑤5年後、10年後のキャリアビジョン　⑥失敗経験＋学び　⑦モチベーションの源泉 \r\n\r\n こちら変わらず参加は大丈夫でしょうか？`
+  navigator.clipboard.writeText(text).then(()=>{toast('📋 RC面談①リマインドをコピーしました')}).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 RC面談①リマインドをコピーしました')
+  })
+}
 function copyInternRemindMail(evId,e){
   if(e)e.stopPropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
@@ -1583,7 +1631,7 @@ function renderEvList(){
       }).join('')
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
       const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto" onclick="event.stopPropagation()">${paxBody}</div>`:''
-      const gwMailBtn=ev.title==='グループワーク'?`<button title="案内メールをコピー" onclick="copyGwMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #a855f7;border-radius:4px;background:#fff;color:#a855f7;cursor:pointer;white-space:nowrap">📋 メール</button><button title="リマインドメールをコピー" onclick="copyGwRemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #7c3aed;border-radius:4px;background:#fff;color:#7c3aed;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:(ev.title==='インターンシップ'?`<button title="案内メールをコピー" onclick="copyInternMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #22c55e;border-radius:4px;background:#fff;color:#22c55e;cursor:pointer;white-space:nowrap">📋 メール</button><button title="リマインドメールをコピー" onclick="copyInternRemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #16a34a;border-radius:4px;background:#fff;color:#16a34a;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:'')
+      const gwMailBtn=ev.title==='グループワーク'?`<button title="案内メールをコピー" onclick="copyGwMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #a855f7;border-radius:4px;background:#fff;color:#a855f7;cursor:pointer;white-space:nowrap">📋 メール</button><button title="リマインドメールをコピー" onclick="copyGwRemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #7c3aed;border-radius:4px;background:#fff;color:#7c3aed;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:(ev.title==='インターンシップ'?`<button title="案内メールをコピー" onclick="copyInternMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #22c55e;border-radius:4px;background:#fff;color:#22c55e;cursor:pointer;white-space:nowrap">📋 メール</button><button title="リマインドメールをコピー" onclick="copyInternRemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #16a34a;border-radius:4px;background:#fff;color:#16a34a;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:(ev.title==='RC面談①'?`<button title="リマインドメールをコピー" onclick="copyRc1RemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #f59e0b;border-radius:4px;background:#fff;color:#f59e0b;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:(ev.title==='最終面接'?`<button title="案内メールをコピー" onclick="copyFinalInterviewMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ef4444;border-radius:4px;background:#fff;color:#ef4444;cursor:pointer;white-space:nowrap">📋 メール</button><button title="リマインドメールをコピー" onclick="copyFinalInterviewRemindMail(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #b91c1c;border-radius:4px;background:#fff;color:#b91c1c;cursor:pointer;white-space:nowrap">📋 リマインド</button>`:''))
       const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="openGcalTask(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button>${gwMailBtn}</div>`
       const titleColor=isPastSection?'color:#999;':`color:${tc.text};`;
       const dotColor=isPastSection?'#bbb':tc.left;
