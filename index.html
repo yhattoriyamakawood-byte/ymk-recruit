@@ -507,12 +507,33 @@ function scheduleSave(){
   _saveTimer=setTimeout(saveAllToSupabase,1500)
 }
 
+async function _mergeAndSaveEvents(){
+  // Fetch latest events from server and merge:
+  // - Events not touched locally → use server version (preserves other devices' attendance changes)
+  // - Events touched locally → keep local version
+  // - Events deleted locally → remove from server
+  try{
+    const serverEvents=await _sbGet('events')
+    if(serverEvents&&serverEvents.length){
+      serverEvents.forEach(se=>{
+        if(_deletedEventIds.has(se.id))return // locally deleted
+        if(_dirtyEvents.has(se.id))return // locally modified, keep local
+        // Not touched this session: apply server version
+        const idx=EVENTS.findIndex(e=>e.id===se.id)
+        if(idx>=0)EVENTS[idx]=se
+        else EVENTS.push(se) // added on another device
+      })
+    }
+  }catch(e){console.warn('event merge error',e)}
+  return _sbSet('events',EVENTS)
+}
+
 async function saveAllToSupabase(){
   if(!_sbAuthed){_setSaveInd('オフライン','#999');return}
   try{
     await Promise.all([
       _sbSet('students',STUDENTS),
-      _sbSet('events',EVENTS),
+      _mergeAndSaveEvents(),
       _sbSet('medias',MEDIAS),
       _sbSet('media_costs',MEDIA_COSTS),
       _sbSet('years',YEARS),
@@ -639,6 +660,8 @@ const SCH_OPTS=['エントリー','個別面談','インターンシップ','グ
 
 let STUDENTS=[]
 let EVENTS=[]
+const _dirtyEvents=new Set()   // event IDs modified this session
+const _deletedEventIds=new Set() // event IDs deleted this session
 
 const DEFAULT_JOB_TAGS=['営業','プランナー','設計','工務','経戦']
 const DEFAULT_AXIS_TAGS=['仕事のやりがい','安定・長期雇用','成長できる環境','ワークライフバランス','社会への貢献','挑戦・裁量','給与・待遇','チームワーク','職場の雰囲気','業界への興味']
@@ -882,6 +905,7 @@ function submitEvent(){
     const ev=EVENTS.find(x=>x.id===editEvId);if(!ev)return
     pushUndo()
     ev.date=date;ev.time=time;ev.loc=evLocType;ev.locDetail=locDetail;ev.staff=staff
+    _dirtyEvents.add(editEvId)
     closeModal('ov-event')
     toast('「'+ev.title+'」を更新しました')
     const cur=getCur();if(cur==='evnt')renderEvList();if(cur==='dash')renderDash()
@@ -891,7 +915,7 @@ function submitEvent(){
   const type=document.getElementById('f-ev-type').value
   const d=new Date(date);const title=`${type} ${d.getMonth()+1}/${d.getDate()}(${WDAYS[d.getDay()]})`
   const newEv={id:nextId(EVENTS),title,type,date,time,loc:evLocType,locDetail,pax:[],staff}
-  EVENTS.push(newEv)
+  EVENTS.push(newEv);_dirtyEvents.add(newEv.id)
   closeModal('ov-event')
   // Googleカレンダーへ自動追加
   openGcalEvent(newEv.id)
@@ -959,8 +983,8 @@ function saveSchedule(){
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
-    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(s.sch)s.sch.evId=matchEv.id}
-    else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);if(s.sch)s.sch.evId=_nev.id}
+    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(s.sch)s.sch.evId=matchEv.id;_dirtyEvents.add(matchEv.id)}
+    else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch)s.sch.evId=_nev.id}
   }
   toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
 }
@@ -1211,7 +1235,7 @@ function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
   const {evId,pi,field}=r.action
   const ev=EVENTS.find(e=>e.id===evId);if(!ev||!ev.pax[pi])return
-  pushUndo()
+  pushUndo();_dirtyEvents.add(evId)
   if(field==='result'){ev.pax[pi].result='pass'}
   else{ev.pax[pi][field]=true}
   renderDash()
@@ -1376,12 +1400,13 @@ function removePaxStu(evId,stuId,e){
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
   pushUndo()
   ev.pax=ev.pax.filter(p=>p.stuId!==stuId)
+  _dirtyEvents.add(evId)
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();renderEvList();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw()}
   toast('イベントから削除しました')
 }
 function togglePaxStatus(evId,pi,field,val,e){
   e.stopPropagation();e.stopImmediatePropagation();const ev=EVENTS.find(ev2=>ev2.id===evId);if(!ev)return
-  pushUndo()
+  pushUndo();_dirtyEvents.add(evId)
   if(field==='result'||field==='attended'){ev.pax[pi][field]=ev.pax[pi][field]===val?null:val}else{ev.pax[pi][field]=!ev.pax[pi][field]}
   if(field==='attended'&&ev.pax[pi].attended==='no'){
     const stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId)
@@ -1410,7 +1435,7 @@ function deleteEvent(evId,e){
     ev.pax.forEach(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);if(s){s.sch=null;s.scheduling=false}})
   }
   const idx=EVENTS.findIndex(x=>x.id===evId)
-  if(idx!==-1)EVENTS.splice(idx,1)
+  if(idx!==-1){EVENTS.splice(idx,1);_deletedEventIds.add(evId)}
   if(selEvId===evId)selEvId=null
   syncPipelineEvents();refreshAll()
   toast('イベントを削除しました')
