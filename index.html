@@ -1461,10 +1461,13 @@ function copyGwMail(evId,e){
   const weekday=['日','月','火','水','木','金','土'][d.getDay()]
   const dateStr=`${month}月${day}日（${weekday}）`
   const isWeb=ev.loc==='WEB'
+  const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
+  const endH=_h+(isWeb?1:2)
+  const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
   const kaiSai=isWeb
     ?`【開催】zoomで行います。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
     :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44-2）\r\n 本社横のビル1階`
-  const text=`先ほどはありがとうございました。 \r\nご予約いただいた次回イベントの案内連絡です！\r\n\r\n  【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～　　：　　\r\n※5分前には集合をお願いします。 \r\n${kaiSai}\r\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \r\n 受検URL：\thttps://tracs.jp \r\n受検ID： \r\n受験パスワード： \r\n －－－－－－－－－－－－－－－ \r\n 以上となります。 \r\nそれでは今後とも、よろしくお願いします！`
+  const text=`先ほどはありがとうございました。 \r\nご予約いただいた次回イベントの案内連絡です！\r\n\r\n  【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～${endTime}\r\n※5分前には集合をお願いします。 \r\n${kaiSai}\r\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \r\n\r\n 受検URL：\thttps://tracs.jp \r\n受検ID： \r\n受験パスワード： \r\n －－－－－－－－－－－－－－－ \r\n 以上となります。 \r\nそれでは今後とも、よろしくお願いします！`
   navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)
   })
