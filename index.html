@@ -2132,53 +2132,11 @@ function _driveUrlFallback(id){
   }
 }
 
-async function uploadStuPdf(id){
+function uploadStuPdf(id){
   const s=STUDENTS.find(x=>x.id===id);if(!s)return
   if(!s.driveFiles)s.driveFiles=[]
   if(s.driveFiles.length>=2){toast('資料は2件まで登録できます（上限）');return}
-  if(!DRIVE_CLIENT_ID){
-    const choice=confirm('Googleドライブ連携の設定がされていません。\n\n【OK】Client IDを設定する（推奨・ワンクリック連携）\n【キャンセル】Drive共有URLを手動で貼り付ける')
-    if(choice){
-      const cid=prompt('Google Cloud ConsoleのOAuth 2.0 クライアントID（ウェブアプリ）を入力してください：\n\nhttps://console.cloud.google.com\n→ APIとサービス → 認証情報 → OAuth 2.0 クライアントID作成\n→ 承認済みJavaScriptオリジンに「https://ymk-recruit.vercel.app」を追加')
-      if(cid&&cid.trim()){
-        DRIVE_CLIENT_ID=cid.trim()
-        localStorage.setItem('drive_client_id',DRIVE_CLIENT_ID)
-        toast('Client IDを保存しました。もう一度「連携」を押してください')
-      }
-      return
-    }
-    _driveUrlFallback(id);return
-  }
-  try{
-    toast('Googleアカウントに接続中...')
-    const [token]=await Promise.all([_getDriveToken(),_loadPickerAPI()])
-    new google.picker.PickerBuilder()
-      .addView(new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes('application/pdf').setIncludeFolders(true))
-      .addView(new google.picker.DocsUploadView().setIncludeFolders(true))
-      .setOAuthToken(token)
-      .setTitle('PDF資料を選択またはアップロード')
-      .setCallback(data=>{
-        if(data[google.picker.Response.ACTION]!==google.picker.Action.PICKED)return
-        const file=data[google.picker.Response.DOCUMENTS][0]
-        const s2=STUDENTS.find(x=>x.id===id)
-        if(s2){
-          if(!s2.driveFiles)s2.driveFiles=[]
-          if(s2.driveFiles.length>=2){toast('資料は2件まで登録できます');return}
-          s2.driveFiles.push({id:file[google.picker.Document.ID],name:file[google.picker.Document.NAME]})
-          scheduleSave();renderStu();selStu(id,true)
-          toast((file[google.picker.Document.NAME]||'PDF')+'を連携しました')
-        }
-      })
-      .build().setVisible(true)
-  }catch(err){
-    console.error('Drive error:',err)
-    if(String(err).includes('popup')||String(err).includes('blocked')){
-      toast('ポップアップがブロックされました。ブラウザの設定で許可してください')
-    }else{
-      toast('Drive接続エラー。URLを手動入力に切り替えます')
-      _driveUrlFallback(id)
-    }
-  }
+  _driveUrlFallback(id)
 }
 
 function deleteStuPdf(id,idx){
