@@ -781,7 +781,7 @@ function openStuModal(data){
   const fields=['ln','fn','lk','fk','uni','fac','dept','home','city','addr','homeR','cityR','addrR','email','phone','memo','bday']
   document.getElementById('f-home-same').checked=false
   if(data){fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=data[f]||''});const bdayEl=document.getElementById('f-bday');if(data.bday){const _b=data.bday.length===10?data.bday.slice(5).replace('-','/'):data.bday;const _p=_b.split('/');if(_p.length===2)bdayEl.value=`2000-${_p[0].padStart(2,'0')}-${_p[1].padStart(2,'0')}`;}else{bdayEl.value=''}document.getElementById('f-gender').value=data.gender||'男性';populateYrSel(data.yr||Math.max(...YEARS));buildMediaDDs();buildStaffDD();document.getElementById('f-media').value=data.media||MEDIAS[0]||'';document.getElementById('f-user').value=data.user||STAFF[0]||'';document.getElementById('f-rank').value=data.rank||'B+';resetTagGroups(data.jobTags||[])}
-  else{fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=''});resetTagGroups();populateYrSel(Math.max(...YEARS))}
+  else{fields.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value=''});document.getElementById('f-bday').value='';document.getElementById('f-gender').value='男性';document.getElementById('f-rank').value='B+';buildMediaDDs();buildStaffDD();document.getElementById('f-media').value=MEDIAS[0]||'';document.getElementById('f-user').value=STAFF[0]||'';resetTagGroups();populateYrSel(Math.max(...YEARS))}
   document.getElementById('ov-student').classList.add('show')
 }
 function nkc(s){return(s||'').normalize('NFKC')}
