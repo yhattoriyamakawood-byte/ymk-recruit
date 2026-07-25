@@ -1098,7 +1098,7 @@ function genReminders(){
   EVENTS.forEach(ev=>{const du=dUntil(ev.date)
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
       if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'}})
-      if(!p.reminded&&du>=0&&du<=3)reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
+      if(!)reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
       if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'}})
       if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title)&&p.attended!=='no')reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'}})
     })
@@ -1655,7 +1655,7 @@ function renderEvList(){
     const secHdr=(label,count,icon,clr,sub)=>`<div style="display:flex;align-items:center;gap:6px;margin:12px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--bd)"><i class="ti ${icon}" style="font-size:13px;color:${clr}"></i><span style="font-size:11px;font-weight:600;color:${clr}">${label}</span><span style="font-size:11px;color:#bbb">(${count}件)</span>${sub||''}</div>`
     const pastAlertCount=past.filter(ev=>{const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title);return fp.some(p=>p.attended!=='yes'&&p.attended!=='no')||(hasResult&&fp.some(p=>p.result===null&&p.attended!=='no'))}).length
     const pastAlertBadge=pastAlertCount>0?`<span style="font-size:10px;color:#c0392b;font-weight:600;margin-left:2px">未対応 ${pastAlertCount}件</span>`:''
-    const upcomingAlertCount=upcoming.filter(ev=>{const du=dUntil(ev.date);const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});return fp.some(p=>!p.notified||(!p.reminded&&du<=3))}).length
+    const upcomingAlertCount=upcoming.filter(ev=>{const du=dUntil(ev.date);const fp=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)});return fp.some(p=>!p.notified||(!p.reminded&&du>=0&&(du<=3||(du===4&&new Date().getDay()===5))))}).length
     const upcomingAlertBadge=upcomingAlertCount>0?`<span style="font-size:10px;color:#c0392b;font-weight:600;margin-left:2px">未対応 ${upcomingAlertCount}件</span>`:''
     const totalAlertCount=upcomingAlertCount+pastAlertCount
     const tb=document.getElementById('ev-tab-badge');if(tb){if(totalAlertCount>0){tb.textContent=totalAlertCount;tb.style.display='inline'}else{tb.style.display='none'}}
