@@ -1098,7 +1098,7 @@ function genReminders(){
   EVENTS.forEach(ev=>{const du=dUntil(ev.date)
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
       if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'}})
-      if(!)reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
+      if(!p.reminded&&du>=0&&(du<=3||(du===4&&new Date().getDay()===5)))reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
       if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'}})
       if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title)&&p.attended!=='no')reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'}})
     })
