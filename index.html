@@ -294,6 +294,16 @@ html,body{height:100%;overflow:hidden}
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="sch-loc-detail"></div>
     <div class="f-row"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sch-scheduling" onchange="toggleSchFields(this)"><span>日程調整中フラグ</span></label></div>
+    <div class="f-row" style="margin-top:6px"><label class="f-lbl">企業側参加者</label>
+      <div>
+        <div id="sch-staff-toggles" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px"></div>
+        <div id="sch-staff-extra" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px"></div>
+        <div style="display:flex;gap:4px">
+          <input id="sch-staff-inp" placeholder="その他の参加者名" class="f-inp" style="flex:1">
+          <button class="btn sm" onclick="_addSchStaffCustom()">追加</button>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="m-ftr"><button class="m-btn" style="color:#a32d2d;border-color:#f7c1c1;margin-right:auto" id="sch-clear-btn" onclick="clearSchedule()">クリア</button><button class="m-btn" onclick="closeModal('ov-schedule')">キャンセル</button><button class="m-btn dk" onclick="saveSchedule()">設定する</button></div>
 </div>
@@ -897,6 +907,43 @@ function _getEvStaff(){
   const extra=[...document.querySelectorAll('#ev-staff-extra [data-name]')].map(el=>el.dataset.name)
   return [...preset,...extra]
 }
+function buildSchStaffToggles(selected){
+  const wrap=document.getElementById('sch-staff-toggles');if(!wrap)return
+  wrap.innerHTML=''
+  COMPANY_STAFF.forEach(name=>{
+    const btn=document.createElement('button')
+    btn.textContent=name;btn.dataset.name=name
+    const on=(selected||[]).includes(name)
+    btn.className='ev-staff-btn'+(on?' on':'')
+    btn.onclick=()=>btn.classList.toggle('on')
+    wrap.appendChild(btn)
+  })
+  const extraWrap=document.getElementById('sch-staff-extra');if(!extraWrap)return
+  extraWrap.innerHTML=''
+  ;(selected||[]).filter(n=>!COMPANY_STAFF.includes(n)).forEach(name=>_appendExtraSchStaffTag(name))
+}
+function _appendExtraSchStaffTag(name){
+  const wrap=document.getElementById('sch-staff-extra');if(!wrap)return
+  const tag=document.createElement('span')
+  tag.dataset.name=name
+  tag.style.cssText='display:inline-flex;align-items:center;gap:3px;background:#f0f0f0;border:1px solid #ddd;border-radius:12px;padding:2px 8px;font-size:12px'
+  tag.innerHTML=name+'<button onclick="this.parentElement.remove()" style="border:none;background:none;cursor:pointer;color:#999;font-size:14px;line-height:1;padding:0">×</button>'
+  wrap.appendChild(tag)
+}
+function _addSchStaffCustom(){
+  const inp=document.getElementById('sch-staff-inp');if(!inp)return
+  const name=inp.value.trim();if(!name)return
+  const presetBtn=[...document.querySelectorAll('#sch-staff-toggles .ev-staff-btn')].find(b=>b.dataset.name===name)
+  if(presetBtn){presetBtn.classList.add('on');inp.value='';inp.focus();return}
+  const existing=[...document.querySelectorAll('#sch-staff-extra [data-name]')].map(el=>el.dataset.name)
+  if(existing.includes(name)){inp.value='';return}
+  _appendExtraSchStaffTag(name);inp.value='';inp.focus()
+}
+function _getSchStaff(){
+  const preset=[...document.querySelectorAll('#sch-staff-toggles .ev-staff-btn.on')].map(b=>b.dataset.name)
+  const extra=[...document.querySelectorAll('#sch-staff-extra [data-name]')].map(el=>el.dataset.name)
+  return [...preset,...extra]
+}
 function submitEvent(){
   const date=document.getElementById('f-ev-date').value;const time=document.getElementById('f-ev-time').value;const locDetail=document.getElementById('f-ev-loc-detail').value
   if(!date){toast('日付を入力してください');return}
@@ -959,6 +1006,8 @@ function openScheduleModal(stuId,e){
   document.getElementById('sch-clear-btn').style.display=s.sch?'':'none'
   schLocType=s.sch?.loc||'WEB';document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))
   if(!s.sch?.time)autoFillSchTime()
+  buildSchStaffToggles(s.sch?.staff||[])
+  document.getElementById('sch-staff-inp').value=''
   document.getElementById('ov-schedule').classList.add('show')
 }
 
@@ -975,7 +1024,7 @@ function saveSchedule(){
   const title=selVal==='その他（自由入力）'?document.getElementById('sch-title-custom').value:selVal
   const isSchFlag=document.getElementById('sch-scheduling').checked
   const date=isSchFlag?null:document.getElementById('sch-date').value;const time=isSchFlag?null:document.getElementById('sch-time').value;const locDetail=document.getElementById('sch-loc-detail').value
-  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null};s.scheduling=isSchFlag
+  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff()};s.scheduling=isSchFlag
   // Move student to matching stage if title matches a pipeline column label
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
