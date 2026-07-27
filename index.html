@@ -1146,17 +1146,17 @@ function genReminders(){
   const reminders=[];const today=new Date()
   EVENTS.forEach(ev=>{const du=dUntil(ev.date)
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
-      if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'}})
-      if(!p.reminded&&du>=0&&(du<=3||(du===4&&new Date().getDay()===5)))reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'}})
-      if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'}})
+      if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'},stuId:stu.id,media:stu.media||'',sch:stu.sch})
+      if(!p.reminded&&du>=0&&(du<=3||(du===4&&new Date().getDay()===5)))reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'},stuId:stu.id,media:stu.media||'',sch:stu.sch})
+      if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'},stuId:stu.id,media:stu.media||'',sch:stu.sch})
       if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title)&&p.attended!=='no')reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'}})
     })
   })
   const todayMM=String(today.getMonth()+1).padStart(2,'0'),todayDD=String(today.getDate()).padStart(2,'0')
   STUDENTS.forEach(s=>{if(!yrMatch(s))return;if(['辞退','不合格','内定辞退'].includes(s.stage))return
-    const _bday=s.bday?(s.bday.length===10?s.bday.slice(5).replace('-','/'):s.bday):'';if(_bday===`${todayMM}/${todayDD}`)reminders.push({name:`${s.ln} ${s.fn}`,text:`🎂 今日は誕生日です`,when:'今日',urgent:false,stuId:s.id})
-    if(!s.lc)reminders.push({name:`${s.ln} ${s.fn}`,text:'連絡記録なし — 初回フォロー',when:'—',urgent:false,stuId:s.id})
-    else{const ds=dSince(s.lc);if(s.scheduling&&ds>=1)reminders.push({name:`${s.ln} ${s.fn}`,text:`日程調整中 — ${ds}日連絡なし`,when:`${ds}日前`,urgent:ds>=1,stuId:s.id});else if(!s.scheduling&&ds>=10)reminders.push({name:`${s.ln} ${s.fn}`,text:`最終連絡から${ds}日経過`,when:`${ds}日前`,urgent:ds>=10,stuId:s.id})}
+    const _bday=s.bday?(s.bday.length===10?s.bday.slice(5).replace('-','/'):s.bday):'';if(_bday===`${todayMM}/${todayDD}`)reminders.push({name:`${s.ln} ${s.fn}`,text:`🎂 今日は誕生日です`,when:'今日',urgent:false,stuId:s.id,media:s.media||'',sch:s.sch}urgent:false,stuId:s.id,media:s.media||'',sch:s.sch})
+    if(!s.lc)reminders.push({name:`${s.ln} ${s.fn}`,text:'連絡記録なし — 初回フォロー',when:'—',urgent:false,stuId:s.id,media:s.media||'',sch:s.sch})
+    else{const ds=dSince(s.lc);if(s.scheduling&&ds>=1)reminders.push({name:`${s.ln} ${s.fn}`,text:`日程調整中 — ${ds}日連絡なし`,when:`${ds}日前`,urgent:ds>=1,stuId:s.id,media:s.media||'',sch:s.sch});else if(!s.scheduling&&ds>=10)reminders.push({name:`${s.ln} ${s.fn}`,text:`最終連絡から${ds}日経過`,when:`${ds}日前`,urgent:ds>=10,stuId:s.id})}
   })
   return reminders.sort((a,b)=>b.urgent-a.urgent)
 }
@@ -1236,7 +1236,7 @@ function renderDash(){
     const actionBtn=r.action?`<button onclick="markRemDone(${ri})" style="flex-shrink:0;height:18px;padding:0 6px;font-size:9px;border:1px solid #ccc;border-radius:3px;background:#fff;cursor:pointer;color:#555;white-space:nowrap">送済</button>`:'';
     const lcPicker=r.stuId?`<input type="date" onchange="remLcUpdate(${r.stuId},this.value)" style="height:20px;font-size:9px;padding:0 4px;border:1px solid #ddd;border-radius:3px;background:#fafafa;color:#333;cursor:pointer;flex-shrink:0" title="最終連絡日を更新">`:'';
     const whenEl=`<div style="font-size:9px;color:${r.urgent?'#a32d2d':'#999'};white-space:nowrap;margin-left:2px">${r.when}</div>`;
-    return`<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f0f0f0"><i class="ti ti-clock" style="font-size:11px;color:${r.urgent?'#a32d2d':'#ccc'};flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div><div style="font-size:10px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.text}</div></div>${actionBtn}${lcPicker}${whenEl}</div>`
+    return`<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f0f0f0"><i class="ti ti-clock" style="font-size:11px;color:${r.urgent?'#a32d2d':'#ccc'};flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}${r.media?'<span style="font-size:9px;background:#e8f4fd;color:#1a6fa0;border-radius:6px;padding:1px 5px;margin-left:4px">'+r.media+'</span>':''}</div><div style="font-size:10px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.text}</div>${r.sch&&r.sch.date?'<div style="font-size:9px;color:#888;margin-top:1px">次回: '+r.sch.title+' '+fmtDateW(r.sch.date)+'</div>':''}</div>${actionBtn}${lcPicker}${whenEl}</div>`
   }).join('')
   const remMore=document.getElementById('rem-more-btn');if(rems.length>MAX_SHOW_REM){remMore.style.display='flex';remMore.textContent=remExpanded?'▲ 折りたたむ':`▼ もっと見る（+${rems.length-MAX_SHOW_REM}件）`}else remMore.style.display='none'
 }
@@ -1280,6 +1280,7 @@ function openEventTab(evId){
   selEvId=evId
   renderEvList()
 }
+function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);setTimeout(()=>selStu(id),50)}
 function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
 function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
