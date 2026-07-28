@@ -177,7 +177,7 @@ html,body{height:100%;overflow:hidden}
 .tl-item.cur::before{background:#111;width:9px;height:9px;left:-2px;top:3px}
 .tl-item:not(:last-child)::after{content:'';position:absolute;left:2px;top:10px;bottom:0;width:1px;background:var(--bd)}
 .tl-d{font-size:10px;color:var(--tx2)}.tl-s{font-weight:500}
-.toast{position:absolute;bottom:14px;right:14px;background:#111;color:#fff;padding:8px 13px;border-radius:6px;font-size:12px;z-index:300;pointer-events:none;opacity:0;transition:opacity .2s}
+.toast{position:absolute;bottom:14px;right:14px;background:#111;color:#fff;padding:8px 13px;border-radius:6px;font-size:12px;z-index:300;pointer-events:auto;cursor:default;opacity:0;transition:opacity .2s}
 .sch-modal{background:#fff;border-radius:10px;width:400px;box-shadow:0 8px 32px rgba(0,0,0,.25)}
 .date-badge{text-align:center;width:38px;flex-shrink:0;background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:3px 2px}
 .date-m{font-size:10px;color:var(--tx2)}.date-d{font-size:15px;font-weight:700;line-height:1.1}.date-w{font-size:10px;color:var(--tx2)}
@@ -2395,7 +2395,7 @@ syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD();renderDash();ren
 
 const _mySessionId='sess_'+Math.random().toString(36).slice(2,10)
 let _myLoadTime=0
-function _createSessionBanner(){if(document.getElementById('session-warning'))return;const el=document.createElement('div');el.id='session-warning';el.title='他のユーザーが操作中';el.style.cssText='display:none;position:fixed;top:10px;right:16px;z-index:9999;background:rgba(80,80,80,.85);color:#fff;border-radius:20px;padding:4px 10px 4px 7px;font-size:11px;align-items:center;gap:5px;pointer-events:none;backdrop-filter:blur(4px)';el.innerHTML='<span style="font-size:13px;line-height:1">👤</span><span>操作中</span>';document.body.appendChild(el)}
+function _createSessionBanner(){if(document.getElementById('session-warning'))return;const el=document.createElement('div');el.id='session-warning';el.title='他のユーザーが操作中\n直近3分以内に別の人が保存操作をしました\nデータが上書きされている可能性があります\n→ 再読み込みして変更を確認してください';el.style.cssText='display:none;position:fixed;top:10px;right:16px;z-index:9999;background:rgba(80,80,80,.85);color:#fff;border-radius:20px;padding:4px 10px 4px 7px;font-size:11px;align-items:center;gap:5px;pointer-events:none;backdrop-filter:blur(4px)';el.innerHTML='<span style="font-size:13px;line-height:1">👤</span><span>操作中</span>';document.body.appendChild(el)}
 async function _writeMySession(){try{const s=await _sbGet('sessions')||{};const now=Date.now();Object.keys(s).forEach(id=>{if(now-s[id]>180000)delete s[id]});s[_mySessionId]=now;await _sbSet('sessions',s)}catch(e){}}
 async function _checkOtherSessions(){try{const s=await _sbGet('sessions')||{};const now=Date.now();const others=Object.keys(s).filter(id=>id!==_mySessionId&&now-s[id]<180000);const el=document.getElementById('session-warning');if(el)el.style.display=others.length>0?'flex':'none'}catch(e){}}
 async function _removeMySession(){try{const s=await _sbGet('sessions')||{};delete s[_mySessionId];await _sbSet('sessions',s)}catch(e){}}
