@@ -366,7 +366,7 @@ html,body{height:100%;overflow:hidden}
         </div>
       </div>
       <div style="display:flex;gap:4px"><button id="undo-btn" onclick="undo()" title="元に戻す (Ctrl+Z)" style="height:26px;padding:0 9px;font-size:12px;border:.5px solid var(--bd);border-radius:5px;background:var(--bg2);color:var(--tx);cursor:pointer;display:flex;align-items:center;gap:4px;opacity:0.4;pointer-events:none"><i class="ti ti-arrow-back-up" style="font-size:14px"></i></button><button id="redo-btn" onclick="redo()" title="やり直す (Ctrl+Y)" style="height:26px;padding:0 9px;font-size:12px;border:.5px solid var(--bd);border-radius:5px;background:var(--bg2);color:var(--tx);cursor:pointer;display:flex;align-items:center;gap:4px;opacity:0.4;pointer-events:none"><i class="ti ti-arrow-forward-up" style="font-size:14px"></i></button></div>
-      <div class="av">田</div>
+      
     </div>
 
     <div class="sc on" id="sc-dash">
@@ -2395,7 +2395,7 @@ syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD();renderDash();ren
 
 const _mySessionId='sess_'+Math.random().toString(36).slice(2,10)
 let _myLoadTime=0
-function _createSessionBanner(){if(document.getElementById('session-warning'))return;const el=document.createElement('div');el.id='session-warning';el.title='他のユーザーが操作中\n直近3分以内に別の人が保存操作をしました\nデータが上書きされている可能性があります\n→ 再読み込みして変更を確認してください';el.style.cssText='display:none;position:fixed;top:48px;right:16px;z-index:9999;background:rgba(80,80,80,.85);color:#fff;border-radius:20px;padding:4px 10px 4px 7px;font-size:11px;align-items:center;gap:5px;pointer-events:none;backdrop-filter:blur(4px)';el.innerHTML='&#x1F464;<span>操作中</span>';document.body.appendChild(el)}
+function _createSessionBanner(){if(document.getElementById('session-warning'))return;const el=document.createElement('div');el.id='session-warning';el.title='他のユーザーが操作中\n直近3分以内に別の人が保存操作をしました\nデータが上書きされている可能性があります\n→ 再読み込みして変更を確認してください';el.style.cssText='display:none;position:fixed;top:10px;right:16px;z-index:9999;background:rgba(80,80,80,.85);color:#fff;border-radius:20px;padding:4px 10px 4px 7px;font-size:11px;align-items:center;gap:5px;pointer-events:none;backdrop-filter:blur(4px)';el.innerHTML='&#x1F464;<span>操作中</span>';document.body.appendChild(el)}
 async function _writeMySession(){try{const s=await _sbGet('sessions')||{};const now=Date.now();Object.keys(s).forEach(id=>{if(now-s[id]>180000)delete s[id]});s[_mySessionId]=now;await _sbSet('sessions',s)}catch(e){}}
 async function _checkOtherSessions(){try{const s=await _sbGet('sessions')||{};const now=Date.now();const others=Object.keys(s).filter(id=>id!==_mySessionId&&now-s[id]<180000);const el=document.getElementById('session-warning');if(el)el.style.display=others.length>0?'flex':'none'}catch(e){}}
 async function _removeMySession(){try{const s=await _sbGet('sessions')||{};delete s[_mySessionId];await _sbSet('sessions',s)}catch(e){}}
