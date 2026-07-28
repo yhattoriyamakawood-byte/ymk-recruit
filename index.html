@@ -1573,8 +1573,7 @@ function copyFinalInterviewRemindMail(evId,e){
   const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
   const endH=_h+1
   const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
-  const text=`お世話になっております。 \r\nヤマカ木材の服部です。 \r\n\r\n 最終選考が近づいてきましたので、再度案内をお送りします。 \r\n\r\n 【イベント名】最終選考 \r\n【日程】${dateStr} \r\n【時間】${ev.time}～${endTime}\r\n※10分前には集合をお願いします。\r\n 【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \r\n白い２階建ての建物 \r\n【服装】スーツ\r\n 【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください） \r\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \r\n\r\n また以前もお伝えしましたように、面接には逆質問の時間がございます。 \r\nあらかじめ2、3個考えておいてください。 \r\n\r\n それでは以上となります。 \r\n\r\n 当日は何で来るかな？ \r\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！ \r\n\r\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！`
-  navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接リマインドをコピーしました')}).catch(()=>{
+  const text=`お世話になっております。\r\nヤマカ木材の服部です。\r\n\r\n最終選考が近づいてきましたので、再度案内をお送りします。\r\n\r\n【イベント名】最終選考\r\n【日程】${dateStr}\r\n【時間】${ev.time}～${endTime}\r\n※10分前には集合をお願いします。\r\n【開催】ヤマカ木材 本社\r\n（岐阜市城東通2丁目44ー2）\r\n白い２階建ての建物\r\n【服装】スーツ\r\n【内容】社長面接\r\n【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください）\r\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート\r\n\r\nまた以前もお伝えしましたように、面接には逆質問の時間がございます。\r\nあらかじめ2、3個考えておいてください。\r\n\r\n－－－－－－－－－－－－－－－\r\n◣重要◥\u3000 \r\n今回は《社長チャンネル》です！\r\n\r\n当社では、社長が自ら想いの共有や社員交流する場として、社内向けYouTubeを発信しています。\r\n\r\n社長の人柄や人勢戦略で意識していることなど知って頂けますので、ぜひ選考前にご覧ください！\r\n\r\n▼動画はこちら\r\nhttps://www.youtube.com/watch?v=AXA9LVnTLXM\r\n－－－－－－－－－－－－－－－\r\n\r\n当日は何で来るかな？\r\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！\r\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！`  navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接リマインドをコピーしました')}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接リマインドをコピーしました')
   })
 }
