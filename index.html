@@ -348,6 +348,7 @@ html,body{height:100%;overflow:hidden}
     <div class="ni-grp-lbl">分析</div>
     <div class="ni" onclick="go('faze',this)"><i class="ti ti-chart-dots"></i>選考分析</div>
     <div class="ni" onclick="go('anal',this)"><i class="ti ti-chart-bar"></i>媒体分析</div>
+    <div class="ni" onclick="go('tmpl',this)"><i class="ti ti-notes"></i>テンプレート</div>
     <div style="flex:1"></div>
     <div class="ni-sep"></div>
     <div class="ni"><i class="ti ti-settings"></i>設定</div>
@@ -465,6 +466,7 @@ html,body{height:100%;overflow:hidden}
     <div class="sc" id="sc-anal">
       <div class="an-wrap" id="anal-wrap" style="overflow:auto"></div>
     </div>
+    <div id="sc-tmpl" class="sc" style="overflow-y:auto"><div style="max-width:760px;margin:0 auto;padding:20px 20px 40px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h2 style="font-size:14px;font-weight:700;margin:0">テンプレート管理</h2><button onclick="saveTmpl()" style="background:#4f6ef7;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600">保存</button></div><p style="font-size:11px;color:#999;margin:0 0 20px">使える変数: <code>${dateStr}</code>=日付&nbsp;&nbsp;<code>${ev.time}</code>=開始時間&nbsp;&nbsp;<code>${endTime}</code>=終了時間&nbsp;&nbsp;<code>${kaiSai}</code>=開催場所&nbsp;&nbsp;<code>${fuku}</code>=服装<br>改行はEnterキーで入力してください</p><div id="tmpl-list"></div></div></div>
   </div>
 </div>
 </div>
@@ -609,6 +611,7 @@ async function _authSubmit(){
       if(loadMsg){loadMsg.style.display='flex'}
       if(authForm)authForm.style.display='none'
       await loadAllFromSupabase()
+      await loadTmpl()
       initSession()
       document.getElementById('ov-auth').style.display='none'
       syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
@@ -1519,7 +1522,7 @@ function copyGwMail(evId,e){
   const kaiSai=isWeb
     ?`【開催】zoomで行います。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
     :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44-2）\r\n 本社横のビル1階`
-  const text=`先ほどはありがとうございました。 \r\nご予約いただいた次回イベントの案内連絡です！\r\n\r\n  【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～${endTime}\r\n※5分前には集合をお願いします。 \r\n${kaiSai}\r\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \r\n\r\n 受検URL：\thttps://tracs.jp \r\n受検ID： \r\n受験パスワード： \r\n －－－－－－－－－－－－－－－ \r\n 以上となります。 \r\nそれでは今後とも、よろしくお願いします！`
+  const text=_TMPL.gwMail?_renderTmpl(_TMPL.gwMail,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`先ほどはありがとうございました。 \r\nご予約いただいた次回イベントの案内連絡です！\r\n\r\n  【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～${endTime}\r\n※5分前には集合をお願いします。 \r\n${kaiSai}\r\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \r\n\r\n 受検URL：\thttps://tracs.jp \r\n受検ID： \r\n受験パスワード： \r\n －－－－－－－－－－－－－－－ \r\n 以上となります。 \r\nそれでは今後とも、よろしくお願いします！`
   navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}メールをコピーしました`)
   })
@@ -1541,7 +1544,7 @@ function copyInternMail(evId,e){
     ?`【開催】https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
     :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44－2） \r\nレンガの建物1階 `
   const fuku=isWeb?'【服装】私服で大丈夫です。':'【服装】スーツ'
-  const text=`WEB面談ありがとうございました！ \r\n 当社へのご興味やご理解を深めていただけたようで、大変うれしく思っています。 \r\n\r\n それではお伝えしましたように、インターンシップの案内をお送りします。 \r\n ご確認よろしくお願いいたします。 \r\n\r\n 【内容】営業スキルインターンシップ \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime}\r\n${kaiSai}\r\n${fuku}\r\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \r\n\r\n 以上となります。 \r\n それでは再度お会いできるのを楽しみにしております。 \r\n\r\n 今後ともよろしくお願いいたします！`
+  const text=_TMPL.internMail?_renderTmpl(_TMPL.internMail,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`WEB面談ありがとうございました！ \r\n 当社へのご興味やご理解を深めていただけたようで、大変うれしく思っています。 \r\n\r\n それではお伝えしましたように、インターンシップの案内をお送りします。 \r\n ご確認よろしくお願いいたします。 \r\n\r\n 【内容】営業スキルインターンシップ \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime}\r\n${kaiSai}\r\n${fuku}\r\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \r\n\r\n 以上となります。 \r\n それでは再度お会いできるのを楽しみにしております。 \r\n\r\n 今後ともよろしくお願いいたします！`
   navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}インターン案内をコピーしました`)}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}インターン案内をコピーしました`)
   })
@@ -1557,7 +1560,7 @@ function copyFinalInterviewMail(evId,e){
   const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
   const endH=_h+1
   const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
-  const text=`お世話になっております。\r\n ヤマカ木材採用担当の服部です。 \r\n\r\n 最終選考の日程が決まりましたので、案内をお送りします。 \r\nご確認よろしくお願いいたします。\r\n\r\n  【イベント名】最終面接 \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime} \r\n※10分前には集合をお願いします。 \r\n【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \r\n白い２階建ての建物 \r\n【服装】スーツ\r\n【宿題】キャリアビジョンシート（最新の状態に更新し、前回同様ファイル登録情報からアップロードをお願いします）\r\n 【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \r\n\r\n また、最終選考は社長に逆質問できる貴重な機会でもありますので、何かお聞きしたいことを事前にいくつか考えておいて頂ければと思います。\r\n\r\n  以上となります。 \r\nそれでは最後の選考も頑張ってください！ \r\n\r\n よろしくお願いいたします。 \r\n\r\n －－－－－－－－－－－－－－－\r\n ◣重要◥\r\n今回は中途スタッフのインタビュー動画です！ \r\n他社経験者から見たヤマカ木材の特徴が知れるので、ぜひご覧下さい！\r\n\r\n  《中途インタビュー》\r\n https://www.youtube.com/watch?v=ay3420yELFw \r\n －－－－－－－－－－－－－－－`
+  const text=_TMPL.finalInterviewMail?_renderTmpl(_TMPL.finalInterviewMail,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`お世話になっております。\r\n ヤマカ木材採用担当の服部です。 \r\n\r\n 最終選考の日程が決まりましたので、案内をお送りします。 \r\nご確認よろしくお願いいたします。\r\n\r\n  【イベント名】最終面接 \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime} \r\n※10分前には集合をお願いします。 \r\n【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \r\n白い２階建ての建物 \r\n【服装】スーツ\r\n【宿題】キャリアビジョンシート（最新の状態に更新し、前回同様ファイル登録情報からアップロードをお願いします）\r\n 【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \r\n\r\n また、最終選考は社長に逆質問できる貴重な機会でもありますので、何かお聞きしたいことを事前にいくつか考えておいて頂ければと思います。\r\n\r\n  以上となります。 \r\nそれでは最後の選考も頑張ってください！ \r\n\r\n よろしくお願いいたします。 \r\n\r\n －－－－－－－－－－－－－－－\r\n ◣重要◥\r\n今回は中途スタッフのインタビュー動画です！ \r\n他社経験者から見たヤマカ木材の特徴が知れるので、ぜひご覧下さい！\r\n\r\n  《中途インタビュー》\r\n https://www.youtube.com/watch?v=ay3420yELFw \r\n －－－－－－－－－－－－－－－`
   navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接案内をコピーしました')}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接案内をコピーしました')
   })
@@ -1573,7 +1576,7 @@ function copyFinalInterviewRemindMail(evId,e){
   const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
   const endH=_h+1
   const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
-  const text=`お世話になっております。\r\nヤマカ木材の服部です。\r\n\r\n最終選考が近づいてきましたので、再度案内をお送りします。\r\n\r\n【イベント名】最終選考\r\n【日程】${dateStr}\r\n【時間】${ev.time}～${endTime}\r\n※10分前には集合をお願いします。\r\n【開催】ヤマカ木材 本社\r\n（岐阜市城東通2丁目44ー2）\r\n白い２階建ての建物\r\n【服装】スーツ\r\n【内容】社長面接\r\n【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください）\r\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート\r\n\r\nまた以前もお伝えしましたように、面接には逆質問の時間がございます。\r\nあらかじめ2、3個考えておいてください。\r\n\r\n－－－－－－－－－－－－－－－\r\n◣重要◥\u3000 \r\n今回は《社長チャンネル》です！\r\n\r\n当社では、社長が自ら想いの共有や社員交流する場として、社内向けYouTubeを発信しています。\r\n\r\n社長の人柄や人勢戦略で意識していることなど知って頂けますので、ぜひ選考前にご覧ください！\r\n\r\n▼動画はこちら\r\nhttps://www.youtube.com/watch?v=AXA9LVnTLXM\r\n－－－－－－－－－－－－－－－\r\n\r\n当日は何で来るかな？\r\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！\r\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！`
+  const text=_TMPL.finalInterviewRemind?_renderTmpl(_TMPL.finalInterviewRemind,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`お世話になっております。\r\nヤマカ木材の服部です。\r\n\r\n最終選考が近づいてきましたので、再度案内をお送りします。\r\n\r\n【イベント名】最終選考\r\n【日程】${dateStr}\r\n【時間】${ev.time}～${endTime}\r\n※10分前には集合をお願いします。\r\n【開催】ヤマカ木材 本社\r\n（岐阜市城東通2丁目44ー2）\r\n白い２階建ての建物\r\n【服装】スーツ\r\n【内容】社長面接\r\n【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください）\r\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート\r\n\r\nまた以前もお伝えしましたように、面接には逆質問の時間がございます。\r\nあらかじめ2、3個考えておいてください。\r\n\r\n－－－－－－－－－－－－－－－\r\n◣重要◥\u3000 \r\n今回は《社長チャンネル》です！\r\n\r\n当社では、社長が自ら想いの共有や社員交流する場として、社内向けYouTubeを発信しています。\r\n\r\n社長の人柄や人勢戦略で意識していることなど知って頂けますので、ぜひ選考前にご覧ください！\r\n\r\n▼動画はこちら\r\nhttps://www.youtube.com/watch?v=AXA9LVnTLXM\r\n－－－－－－－－－－－－－－－\r\n\r\n当日は何で来るかな？\r\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！\r\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！`
   navigator.clipboard.writeText(text).then(()=>{toast('📋 最終面接リマインドをコピーしました')}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接リマインドをコピーしました')
   })
@@ -1589,7 +1592,7 @@ function copyRc1RemindMail(evId,e){
   const [_h,_m]=(ev.time||'00:00').split(':').map(Number)
   const endH=_h+1
   const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
-  const text=`ヤマカ木材の服部です！\r\n\r\n面談の日程が近づいてきましたので、再度案内をお送りします。\r\n ご確認よろしくお願いいたします。 \r\n\r\n 【イベント名】リクルータ面談 \r\n【日程】${dateStr} \r\n【時間】${ev.time}～${endTime}\r\n【内容】選考企業の整理、次回選考の準備 \r\n【開催】zoomで行います。5分ほど前にご入室ください。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 \r\n【服装】私服で大丈夫です \r\n【持ち物】筆記用具、メモ帳 \r\n\r\n【準備】 \r\n⑴ キャリアビジョンシートのアップロード\r\n（面談の3日前までにアップロードをお願いします）\r\n\r\n  ⑵ 下記の回答準備\r\n  ①強み、弱み　②志望動機　③就活の軸　④学生時代力を入れたこと　⑤5年後、10年後のキャリアビジョン　⑥失敗経験＋学び　⑦モチベーションの源泉 \r\n\r\n こちら変わらず参加は大丈夫でしょうか？`
+  const text=_TMPL.rc1Remind?_renderTmpl(_TMPL.rc1Remind,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`ヤマカ木材の服部です！\r\n\r\n面談の日程が近づいてきましたので、再度案内をお送りします。\r\n ご確認よろしくお願いいたします。 \r\n\r\n 【イベント名】リクルータ面談 \r\n【日程】${dateStr} \r\n【時間】${ev.time}～${endTime}\r\n【内容】選考企業の整理、次回選考の準備 \r\n【開催】zoomで行います。5分ほど前にご入室ください。\r\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 \r\n【服装】私服で大丈夫です \r\n【持ち物】筆記用具、メモ帳 \r\n\r\n【準備】 \r\n⑴ キャリアビジョンシートのアップロード\r\n（面談の3日前までにアップロードをお願いします）\r\n\r\n  ⑵ 下記の回答準備\r\n  ①強み、弱み　②志望動機　③就活の軸　④学生時代力を入れたこと　⑤5年後、10年後のキャリアビジョン　⑥失敗経験＋学び　⑦モチベーションの源泉 \r\n\r\n こちら変わらず参加は大丈夫でしょうか？`
   navigator.clipboard.writeText(text).then(()=>{toast('📋 RC面談①リマインドをコピーしました')}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 RC面談①リマインドをコピーしました')
   })
@@ -1610,7 +1613,7 @@ function copyInternRemindMail(evId,e){
     ?`【開催】https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
     :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44－2） \r\nレンガの建物1階 `
   const fuku=isWeb?'【服装】私服で大丈夫です。':'【服装】スーツ'
-  const text=`ご予約の日程が近づいてきましたので、再度案内をお送りします。 \r\n ご確認よろしくお願いいたします。 \r\n\r\n 【内容】営業スキルインターンシップ \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime}\r\n${kaiSai}\r\n${fuku}\r\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \r\n\r\n こちらのイベントへのご参加は、変わらず大丈夫そうでしょうか？`
+  const text=_TMPL.internRemind?_renderTmpl(_TMPL.internRemind,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`ご予約の日程が近づいてきましたので、再度案内をお送りします。 \r\n ご確認よろしくお願いいたします。 \r\n\r\n 【内容】営業スキルインターンシップ \r\n【日程】${dateStr}　 \r\n【時間】${ev.time}～${endTime}\r\n${kaiSai}\r\n${fuku}\r\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \r\n\r\n こちらのイベントへのご参加は、変わらず大丈夫そうでしょうか？`
   navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}インターンリマインドをコピーしました`)}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}インターンリマインドをコピーしました`)
   })
@@ -1630,9 +1633,49 @@ function copyGwRemindMail(evId,e){
   const kaiSai=isWeb
     ?`【開催】https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \r\nミーティングID: 919 195 3466 \r\nパスコード: 325019 `
     :`【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44-2） \r\n 本社横のビル1階`
-  const text=`ご予約の日程が近づいてきたので、再度詳細をお送りします。 \r\n 適性検査が終わっていなければすぐにそちらのご対応もお願いいたします。 \r\n\r\n 【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～${endTime}\r\n※5分前には集合をお願いします。\r\n ${kaiSai}\r\n【服装】スーツ \r\n【持ち物】筆記用具、メモ帳　 ※履歴書・エントリーシートなどは不要です。 \r\n\r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\nワークの前提知識として必要なので、会社紹介を復習しておいてください！ \r\n 視聴確認のため簡単な確認テストもお願いします。\r\n\r\n  《復習動画URL》 https://youtu.be/WUxKWY2JytI \r\n\r\n 《確認テスト 10問》 https://forms.gle/qBizid5nWzYGBtuS6 \r\n－－－－－－－－－－－－－－－ \r\n\r\n グループワークについてですが、変わらず参加で大丈夫そうでしょうか？`
+  const text=_TMPL.gwRemind?_renderTmpl(_TMPL.gwRemind,{ev,dateStr,endTime,month,day,weekday,kaiSai:typeof kaiSai!='undefined'?kaiSai:'',fuku:typeof fuku!='undefined'?fuku:''}):`ご予約の日程が近づいてきたので、再度詳細をお送りします。 \r\n 適性検査が終わっていなければすぐにそちらのご対応もお願いいたします。 \r\n\r\n 【内容】グループワーク \r\n【日程】${dateStr}　\r\n 【時間】${ev.time}～${endTime}\r\n※5分前には集合をお願いします。\r\n ${kaiSai}\r\n【服装】スーツ \r\n【持ち物】筆記用具、メモ帳　 ※履歴書・エントリーシートなどは不要です。 \r\n\r\n －－－－－－－－－－－－－－－\r\n ◣重要◥ \r\nワークの前提知識として必要なので、会社紹介を復習しておいてください！ \r\n 視聴確認のため簡単な確認テストもお願いします。\r\n\r\n  《復習動画URL》 https://youtu.be/WUxKWY2JytI \r\n\r\n 《確認テスト 10問》 https://forms.gle/qBizid5nWzYGBtuS6 \r\n－－－－－－－－－－－－－－－ \r\n\r\n グループワークについてですが、変わらず参加で大丈夫そうでしょうか？`
   navigator.clipboard.writeText(text).then(()=>{toast(`📋 ${isWeb?'WEB':'対面'}リマインドをコピーしました`)}).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast(`📋 ${isWeb?'WEB':'対面'}リマインドをコピーしました`)
+  })
+}
+
+// ===== TEMPLATE MANAGEMENT =====
+let _TMPL={}
+const _TMPL_KEYS=[
+  {key:'gwMail',label:'グループワーク　案内メール'},
+  {key:'internMail',label:'インターン　案内メール'},
+  {key:'finalInterviewMail',label:'最終選考　案内メール'},
+  {key:'finalInterviewRemind',label:'最終選考　リマインド'},
+  {key:'rc1Remind',label:'RC1面談　リマインド'},
+  {key:'internRemind',label:'インターン　リマインド'},
+  {key:'gwRemind',label:'グループワーク　リマインド'},
+]
+async function loadTmpl(){try{_TMPL=await _sbGet('templates')||{}}catch(e){};renderTmplPanel()}
+function renderTmplPanel(){
+  const list=document.getElementById('tmpl-list')
+  if(!list)return
+  list.innerHTML=''
+  _TMPL_KEYS.forEach(({key,label})=>{
+    const wrap=document.createElement('div');wrap.style.marginBottom='24px'
+    const lbl=document.createElement('div')
+    lbl.style.cssText='font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px'
+    lbl.textContent=label
+    const ta=document.createElement('textarea')
+    ta.id='tmpl-'+key;ta.rows=10
+    ta.style.cssText='width:100%;box-sizing:border-box;font-size:12px;font-family:inherit;padding:8px;border:1px solid var(--bd);border-radius:6px;resize:vertical;line-height:1.6;color:var(--tx)'
+    ta.placeholder='空欄の場合はデフォルトのテンプレートが使用されます'
+    ta.value=_TMPL[key]||''
+    wrap.appendChild(lbl);wrap.appendChild(ta);list.appendChild(wrap)
+  })
+}
+async function saveTmpl(){
+  _TMPL_KEYS.forEach(({key})=>{const el=document.getElementById('tmpl-'+key);if(el)_TMPL[key]=el.value})
+  try{await _sbSet('templates',_TMPL);toast('✅ テンプレートを保存しました')}catch(e){toast('❌ 保存に失敗しました')}
+}
+function _renderTmpl(tpl,ctx){
+  return tpl.replace(/\$\{([\w.]+)\}/g,function(_,path){
+    var v=path.split('.').reduce(function(o,k){return o&&o[k]!==undefined?o[k]:null},ctx)
+    return v!==null&&v!==undefined?String(v):''
   })
 }
 
