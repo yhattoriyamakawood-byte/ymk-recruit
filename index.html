@@ -774,8 +774,20 @@ function fmtMDW(iso){if(!iso)return{m:'',d:'',w:''};const d=new Date(iso);return
 function todayMD(){const d=new Date();return`${d.getMonth()+1}/${d.getDate()}`}
 function localDateStr(d=new Date()){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function nextId(arr){return arr.length>0?Math.max(...arr.map(x=>x.id))+1:1}
-function schChipHTML(s){if(!s.sch?.date)return`<span style="font-size:10px;color:#ccc">—</span>`;const days=dUntil(s.sch.date);const soon=days<=3&&days>=0;return`<span class="ev-chip ${soon?'soon':''}" style="align-items:flex-start;flex-direction:column;gap:1px"><span style="font-size:9px;font-weight:600;line-height:1.3">${s.sch.title}</span><span style="display:flex;align-items:center;gap:3px;font-size:10px"><i class="ti ti-calendar-event" style="font-size:10px"></i>${fmtDateW(s.sch.date)} ${s.sch.time}</span></span>`}
-function lcStyle(s){const d=dSince(s.lc);if(!s.lc)return'color:#ccc';if(d>14)return'color:#a32d2d;font-weight:500';if(d>7)return'color:#ba7517;font-weight:500';return'color:#666'}
+function schChipHTML(s){
+  if(!s.sch?.date)return`<span style="font-size:10px;color:#ccc">—</span>`;
+  const cMap={
+    '個別面談':{bg:'#eef5ff',tx:'#1a4fa0',bd:'#93c5fd'},
+    'インターンシップ':{bg:'#f0fdf4',tx:'#166534',bd:'#86efac'},
+    'グループワーク':{bg:'#faf5ff',tx:'#6b21a8',bd:'#d8b4fe'},
+    'RC面談①':{bg:'#fffbeb',tx:'#92400e',bd:'#fcd34d'},
+    '役員面接':{bg:'#fef2f2',tx:'#991b1b',bd:'#fca5a5'},
+    'RC面談②':{bg:'#eff6ff',tx:'#1e40af',bd:'#bfdbfe'},
+    '最終面接':{bg:'#f0fdf4',tx:'#14532d',bd:'#6ee7b7'},
+    'フォローイベント':{bg:'#fff7ed',tx:'#9a3412',bd:'#fdba74'},
+  };
+  const c=cMap[s.sch.title]||{bg:'#f8f8f8',tx:'#444',bd:'#ccc'};
+  return`<span style="display:inline-flex;align-items:flex-start;flex-direction:column;gap:1px;font-size:10px;padding:2px 6px;border-radius:5px;background:${c.bg};color:${c.tx};border:.5px solid ${c.bd}"><span style="font-size:9px;font-weight:600;line-height:1.3">${s.sch.title}</span><span style="display:flex;align-items:center;gap:3px;font-size:10px"><i class="ti ti-calendar-event" style="font-size:10px"></i>${fmtDateW(s.sch.date)} ${s.sch.time}</span></span>`}function lcStyle(s){const d=dSince(s.lc);if(!s.lc)return'color:#ccc';if(d>14)return'color:#a32d2d;font-weight:500';if(d>7)return'color:#ba7517;font-weight:500';return'color:#666'}
 function rateBg(r){if(r>=70)return'#c0dd97';if(r>=50)return'#fac775';return'#f7a1a1'}
 function rateColor(r){if(r>=70)return'#27500a';if(r>=50)return'#ba7517';return'#a32d2d'}
 function setSchLoc(v,el){schLocType=v;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x===el))}
@@ -1748,8 +1760,8 @@ function renderEvList(){
       return`<div class="ev-card ${selEvId===ev.id?'on':''}" style="${alertStyle}${cardBg}"><div class="ev-card-hdr" onclick="toggleEvCard(${ev.id})"><div style="display:flex;align-items:center;gap:10px"><div class="date-badge" style="${dateBadgeStyle}"><div class="date-m">${dt.m}</div><div class="date-d">${dt.d}</div><div class="date-w">${dt.w}</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;${titleColor}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>${ev.title}${alertBadge}</div><div style="display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#bbb">${ev.time}</span><span style="font-size:9px;color:#bbb">${ev.loc==='WEB'?'WEB':ev.locDetail||ev.loc}</span><span style="font-size:9px;color:#bbb">${filteredPax.length}名</span>${ev.staff&&ev.staff.length?'<span style="font-size:9px;background:#f0f0f0;color:#555;border-radius:8px;padding:1px 6px">'+ev.staff.join('・')+'</span>':''}</div></div>${gcalBtns}<i class="ti ti-chevron-${selEvId===ev.id?'up':'down'}" style="font-size:14px;color:#999;margin-left:6px"></i></div></div>${expandedSection}
 </div>`
     }
-    const upcoming=EVENTS.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(a.date)-new Date(b.date))
-    const past=EVENTS.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>new Date(b.date)-new Date(a.date))
+    const upcoming=EVENTS.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(a.date)-new Date(b.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+ah*60+ +am)-(+bh*60+ +bm)})
+    const past=EVENTS.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(b.date)-new Date(a.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+bh*60+ +bm)-(+ah*60+ +am)})
     const showPast=window._evPastExp?past:past.slice(0,MAX_PAST)
     const upHtml=upcoming.map(ev=>buildEvCard(ev,false)).join('')
     const pastHtml=showPast.map(ev=>buildEvCard(ev,true)).join('')
