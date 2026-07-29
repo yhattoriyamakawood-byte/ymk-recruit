@@ -778,12 +778,12 @@ function schChipHTML(s){
   if(!s.sch?.date)return`<span style="font-size:10px;color:#ccc">—</span>`;
   const cMap={
     '個別面談':{bg:'#eef5ff',tx:'#1a4fa0',bd:'#93c5fd'},
-    'インターンシップ':{bg:'#f0fdf4',tx:'#166534',bd:'#86efac'},
+    'インターンシップ':{bg:'#f0fdfa',tx:'#0f766e',bd:'#5eead4'},
     'グループワーク':{bg:'#faf5ff',tx:'#6b21a8',bd:'#d8b4fe'},
     'RC面談①':{bg:'#fffbeb',tx:'#92400e',bd:'#fcd34d'},
     '役員面接':{bg:'#fef2f2',tx:'#991b1b',bd:'#fca5a5'},
     'RC面談②':{bg:'#eff6ff',tx:'#1e40af',bd:'#bfdbfe'},
-    '最終面接':{bg:'#f0fdf4',tx:'#14532d',bd:'#6ee7b7'},
+    '最終面接':{bg:'#fff1f2',tx:'#9f1239',bd:'#fda4af'},
     'フォローイベント':{bg:'#fff7ed',tx:'#9a3412',bd:'#fdba74'},
   };
   const c=cMap[s.sch.title]||{bg:'#f8f8f8',tx:'#444',bd:'#ccc'};
@@ -1705,12 +1705,12 @@ function renderEvList(){
   function evTypeColor(title){
     const map={
       '個別面談':{left:'#2c7be5',bg:'#eef5ff',text:'#1a4fa0'},
-      'インターンシップ':{left:'#22c55e',bg:'#f0fdf4',text:'#166534'},
+      'インターンシップ':{left:'#0d9488',bg:'#f0fdfa',text:'#0f766e'},
       'グループワーク':{left:'#a855f7',bg:'#faf5ff',text:'#6b21a8'},
       'RC面談①':{left:'#f59e0b',bg:'#fffbeb',text:'#92400e'},
       '役員面接':{left:'#ef4444',bg:'#fef2f2',text:'#991b1b'},
       'RC面談②':{left:'#3b82f6',bg:'#eff6ff',text:'#1e40af'},
-      '最終面接':{left:'#16a34a',bg:'#f0fdf4',text:'#14532d'},
+      '最終面接':{left:'#e11d48',bg:'#fff1f2',text:'#9f1239'},
       'フォローイベント':{left:'#f97316',bg:'#fff7ed',text:'#9a3412'},
     };
     return map[title]||{left:'#888',bg:'#f8f8f8',text:'#444'};
