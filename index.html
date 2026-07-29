@@ -1064,10 +1064,10 @@ function syncPipelineEvents(){
     if(!yrMatch(s))return
     if(!s.sch?.date||!s.sch?.title)return
     if(!PIPE_STAGES.includes(s.sch.title))return
-    const _sk=a=>[...(a||[])].sort().join('|');let ev=EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&_sk(e.staff)===_sk(s.sch.staff))
+    const _sk=a=>[...(a||[])].sort().join('|');const _inEv=EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&e.pax.some(p=>p.stuId===s.id));let ev=_inEv||EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&_sk(e.staff)===_sk(s.sch.staff))
     if(!ev){
       const typeMap={'個別面談':'面談','インターンシップ':'インターン','グループワーク':'面談','RC面談①':'面談','役員面接':'面談','RC面談②':'面談','最終面接':'面談','フォローイベント':'懇親会'}
-      ev={id:nextId(EVENTS),title:s.sch.title,type:typeMap[s.sch.title]||'面談',date:s.sch.date,time:s.sch.time,loc:s.sch.loc||'WEB',locDetail:s.sch.locDetail||'',pax:[],_synced:true}
+      ev={id:nextId(EVENTS),title:s.sch.title,type:typeMap[s.sch.title]||'面談',date:s.sch.date,time:s.sch.time,loc:s.sch.loc||'WEB',locDetail:s.sch.locDetail||'',staff:s.sch.staff||[],pax:[],_synced:true}
       EVENTS.push(ev)
     }
     if(!ev.pax.find(p=>p.stuId===s.id)){
