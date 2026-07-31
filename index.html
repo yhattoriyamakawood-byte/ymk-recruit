@@ -1725,7 +1725,7 @@ function renderEvList(){
       const dt=fmtMDW(ev.date)
       const du=Math.ceil((new Date(ev.date)-new Date(todayStr))/86400000)
       const badges=[]
-      if(!isPastSection&&du>=0&&du<7&&filteredPax.some(p=>!p.notified))badges.push({label:'案内未送',bg:'#e6f1fb',color:'#0c447c',bd:'#b5d4f4'})
+      if(!isPastSection&&filteredPax.some(p=>!p.notified))badges.push({label:'案内未送',bg:'#e6f1fb',color:'#0c447c',bd:'#b5d4f4'})
       if(!isPastSection&&(du<=3||(du===4&&new Date().getDay()===5))&&filteredPax.some(p=>!p.reminded))badges.push({label:'リマインド未送',bg:'#faeeda',color:'#633806',bd:'#fac775'})
       if(isPastSection&&filteredPax.some(p=>p.attended!=='yes'&&p.attended!=='no'))badges.push({label:'出欠未確認',bg:'#fff3e0',color:'#e67e22',bd:'#f5c07a'})
       const hasResult=['グループワーク','役員面接','最終面接'].includes(ev.title)
