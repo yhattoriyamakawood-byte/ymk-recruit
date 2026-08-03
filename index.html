@@ -1448,7 +1448,7 @@ function renderKB(){
         stu.stage=ns
         stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:ns,cur:true})
         const PIPE_EV=['個別面談','インターンシップ','インターン','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
-        const EXIT_STAGES=['辞退','不合格','内定辞退']
+        const EXIT_STAGES=['辞退','不合格','内定辞退','承諾待ち']
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
         if(PIPE_EV.includes(ns)){stu.scheduling=true;stu.sch=null}
         pushUndo()
