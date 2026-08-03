@@ -767,7 +767,7 @@ document.addEventListener('keydown',function(e){
 })
 const MAX_SHOW_EV=3,MAX_SHOW_REM=6
 
-function dSince(d){if(!d)return 9999;return Math.floor((Date.now()-new Date(d).getTime())/86400000)}
+function dSince(d){if(!d)return 9999;const t=new Date();t.setHours(0,0,0,0);const s=new Date(d);s.setHours(0,0,0,0);return Math.round((t-s)/86400000)}
 function dUntil(d){if(!d)return 9999;const t=new Date();t.setHours(0,0,0,0);const e=new Date(d);e.setHours(0,0,0,0);return Math.round((e-t)/86400000)}
 function fmtDateW(iso){if(!iso)return'';const d=new Date(iso);return`${d.getMonth()+1}/${d.getDate()}(${WDAYS[d.getDay()]})`}
 function fmtMDW(iso){if(!iso)return{m:'',d:'',w:''};const d=new Date(iso);return{m:`${d.getMonth()+1}月`,d:d.getDate(),w:WDAYS[d.getDay()]}}
