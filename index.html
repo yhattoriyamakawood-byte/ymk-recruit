@@ -1075,10 +1075,8 @@ function syncPipelineEvents(){
     }
   })
   EVENTS.sort((a,b)=>new Date(b.date)-new Date(a.date))
-    if(ev.pax.length!==_before)_dirtyEvents.add(ev.id);
-  });
-}
-function buildMediaDDs(){
+
+}function buildMediaDDs(){
   const opts=MEDIAS.map(m=>`<option value="${m}">${m}</option>`).join('')
   const fm=document.getElementById('f-media');if(fm){const prev=fm.value;fm.innerHTML=opts;if(MEDIAS.includes(prev))fm.value=prev}
   const ff=document.getElementById('filter-media');if(ff){const prev=ff.value;ff.innerHTML='<option value="">全媒体</option>'+opts;if(MEDIAS.includes(prev))ff.value=prev;else ff.value=''}
