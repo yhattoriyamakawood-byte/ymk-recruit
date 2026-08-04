@@ -1154,7 +1154,7 @@ function toggleYrDD(e){e.stopPropagation();const dd=document.getElementById('yr-
 document.addEventListener('click',()=>{const dd=document.getElementById('yr-dd');if(dd)dd.style.display='none'})
 function addYearKey(e){if(e.key==='Enter')addYearFromInput()}
 function addYearFromInput(){const inp=document.getElementById('yr-add-inp');const v=parseInt(inp.value.trim());if(!v||isNaN(v))return;if(!YEARS.includes(v)){YEARS.push(v);YEARS.sort()}selYears.add(v);inp.value='';buildYrDD();refreshAll()}
-function refreshAll(){syncPipelineEvents();const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList()}
+function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList()}
 function yrMatch(s){return selYears.size===0||selYears.has(s.yr)}
 function toggleMore(type){if(type==='rem')remExpanded=!remExpanded;else evExpanded=!evExpanded;renderDash()}
 
