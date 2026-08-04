@@ -1075,6 +1075,22 @@ function syncPipelineEvents(){
     }
   })
   EVENTS.sort((a,b)=>new Date(b.date)-new Date(a.date))
+
+  // 日程変更時に古いイベントから学生を削除
+  const _today=new Date();_today.setHours(0,0,0,0);
+  EVENTS.forEach(ev=>{
+    if(!ev.pax||!ev.date)return;
+    const _evDate=new Date(ev.date);_evDate.setHours(0,0,0,0);
+    if(_evDate<_today)return;
+    const _before=ev.pax.length;
+    ev.pax=ev.pax.filter(p=>{
+      if(!p.stuId)return true;
+      const _stu=STUDENTS.find(s=>s.id===p.stuId);
+      if(!_stu||!_stu.sch)return false;
+      return _stu.sch.evId===ev.id;
+    });
+    if(ev.pax.length!==_before)_dirtyEvents.add(ev.id);
+  });
 }
 function buildMediaDDs(){
   const opts=MEDIAS.map(m=>`<option value="${m}">${m}</option>`).join('')
