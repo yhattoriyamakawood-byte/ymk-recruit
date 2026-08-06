@@ -1484,6 +1484,8 @@ function removePaxStu(evId,stuId,e){
   pushUndo()
   ev.pax=ev.pax.filter(p=>p.stuId!==stuId)
   _dirtyEvents.add(evId)
+  const stu=STUDENTS.find(s=>s.id===stuId)
+  if(stu&&stu.sch){stu.sch=null;stu._updatedAt=Date.now();_saveSingleStudent(stuId)}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();renderEvList();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw()}
   toast('イベントから削除しました')
 }
