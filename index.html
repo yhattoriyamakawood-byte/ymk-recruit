@@ -1595,7 +1595,7 @@ function copyFinalInterviewRemindMail(evId,e){
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 最終面接リマインドをコピーしました')
   })
 }
-function function copyRc1Mail(evId,e){
+function copyRc1Mail(evId,e){
   if(e)e.stopPropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
   const d=new Date(ev.date+'T00:00:00')
@@ -1611,7 +1611,7 @@ function function copyRc1Mail(evId,e){
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('📋 RC①案内をコピーしました')
   })
 }
-copyRc1RemindMail(evId,e){
+function copyRc1RemindMail(evId,e){
   if(e)e.stopPropagation()
   const ev=EVENTS.find(x=>x.id===evId);if(!ev)return
   const d=new Date(ev.date+'T00:00:00')
