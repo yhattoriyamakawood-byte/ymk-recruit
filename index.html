@@ -541,6 +541,19 @@ async function _mergeAndSaveEvents(){
   return _sbSet('events',EVENTS)
 }
 
+async function _saveSingleStudent(stuId){
+  if(!_sbAuthed)return
+  try{
+    const all=await _sbGet('students')||[]
+    const s=STUDENTS.find(x=>x.id===stuId)
+    if(!s)return
+    const idx=all.findIndex(x=>x.id===stuId)
+    if(idx>=0)all[idx]=s;else all.push(s)
+    _setSaveInd('保存中…','#f59e0b')
+    await _sbSet('students',all)
+    _setSaveInd('保存済み','#22c55e')
+  }catch(e){console.error('save student error',e)}
+}
 async function saveAllToSupabase(){
   if(!_sbAuthed){_setSaveInd('オフライン','#999');return}
   try{
@@ -1052,7 +1065,7 @@ function saveSchedule(){
     if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;_dirtyEvents.add(matchEv.id)}
     else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch)s.sch.evId=_nev.id}
   }
-  saveAllToSupabase();saveAllToSupabase();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
+  _saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
 }
 function clearSchedule(){pushUndo();const s=STUDENTS.find(x=>x.id===schStuId);if(!s)return;s.sch=null;s.scheduling=false;closeModal('ov-schedule');syncPipelineEvents();toast('日程をクリアしました');const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)}
 
@@ -1297,8 +1310,8 @@ function openEventTab(evId){
   renderEvList()
 }
 function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);setTimeout(()=>selStu(id),50)}
-function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();saveAllToSupabase();renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
-function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;saveAllToSupabase();renderDash();if(getCur()==='stud')renderStu()}
+function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
+function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu()}
 function dpMemoUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.memo=val;renderDash()}
 function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
