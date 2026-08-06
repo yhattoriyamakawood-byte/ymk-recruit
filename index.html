@@ -547,18 +547,19 @@ async function _saveSingleStudent(stuId){
     const all=await _sbGet('students')||[]
     const s=STUDENTS.find(x=>x.id===stuId)
     if(!s)return
-    const idx=all.findIndex(x=>x.id===stuId)
+    s._updatedAt=Date.now();const idx=all.findIndex(x=>x.id===stuId)
     if(idx>=0)all[idx]=s;else all.push(s)
     _setSaveInd('保存中…','#f59e0b')
     await _sbSet('students',all)
     _setSaveInd('保存済み','#22c55e')
   }catch(e){console.error('save student error',e)}
 }
+async function _mergeAndSaveStudents(){if(!_sbAuthed)return;try{const dbAll=await _sbGet('students')||[];const dbMap={};dbAll.forEach(s=>{dbMap[s.id]=s});STUDENTS.forEach(s=>{const db=dbMap[s.id];if(!db||(s._updatedAt||0)>=(db._updatedAt||0))dbMap[s.id]=s});await _sbSet('students',Object.values(dbMap))}catch(e){console.error(e)}}
 async function saveAllToSupabase(){
   if(!_sbAuthed){_setSaveInd('オフライン','#999');return}
   try{
     await Promise.all([
-      _sbSet('students',STUDENTS),
+      _mergeAndSaveStudents(),
       _mergeAndSaveEvents(),
       _sbSet('medias',MEDIAS),
       _sbSet('media_costs',MEDIA_COSTS),
@@ -1310,8 +1311,8 @@ function openEventTab(evId){
   renderEvList()
 }
 function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);setTimeout(()=>selStu(id),50)}
-function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
-function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu()}
+function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
+function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu()}
 function dpMemoUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.memo=val;renderDash()}
 function markRemDone(ri){
   const r=_remCache[ri];if(!r?.action)return
