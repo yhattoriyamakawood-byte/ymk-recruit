@@ -284,7 +284,7 @@ html,body{height:100%;overflow:hidden}
       <select class="f-sel" id="sch-title-sel" onchange="onSchTitleChange()">
         <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定承諾</option><option>内定辞退</option><option>内定承諾面談</option><option>フォローイベント</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
     </div>
-    <div class="f-row" id="sch-custom-row" style="display:none"><label class="f-lbl">内容（自由入力）</label><input class="f-inp" id="sch-title-custom"></div>
+    <div class="f-row" id="sch-custom-row"><label class="f-lbl">メモ</label><input class="f-inp" id="sch-title-custom"></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date" onchange="if(this.value){const cb=document.getElementById('sch-scheduling');if(cb.checked){cb.checked=false;const t=document.getElementById('sch-time');if(!t.value)t.value='10:00'};autoFillSchTime()}"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
     <div class="f-row"><label class="f-lbl">場所</label>
       <div class="loc-toggle" id="sch-loc-toggle">
@@ -293,7 +293,6 @@ html,body{height:100%;overflow:hidden}
       </div>
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="sch-loc-detail"></div>
-    <div class="f-row"><label class="f-lbl">メモ</label><input class="f-inp" id="sch-note" placeholder="自由記述"></div>
     <div class="f-row"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sch-scheduling" onchange="toggleSchFields(this)"><span>日程調整中フラグ</span></label></div>
     <div class="f-row" style="margin-top:6px"><label class="f-lbl">企業側参加者</label>
       <div>
@@ -808,7 +807,7 @@ function rateBg(r){if(r>=70)return'#c0dd97';if(r>=50)return'#fac775';return'#f7a
 function rateColor(r){if(r>=70)return'#27500a';if(r>=50)return'#ba7517';return'#a32d2d'}
 function setSchLoc(v,el){schLocType=v;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x===el))}
 function setEvLoc(v,el){evLocType=v;document.querySelectorAll('#ev-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x===el))}
-function onSchTitleChange(){const v=document.getElementById('sch-title-sel').value;document.getElementById('sch-custom-row').style.display=v==='その他（自由入力）'?'block':'none';autoFillSchTime()}
+function onSchTitleChange(){const v=document.getElementById('sch-title-sel').value;autoFillSchTime()}
 function getCur(){return document.querySelector('.sc.on')?.id?.replace('sc-','')}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function toast(msg,dur=2500){const t=document.getElementById('toast');t.innerHTML=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',dur)}
@@ -1029,7 +1028,6 @@ function openScheduleModal(stuId,e){
   const sel=document.getElementById('sch-title-sel')
   if(SCH_OPTS.includes(defaultTitle)){sel.value=defaultTitle}
   else{sel.value='その他（自由入力）';document.getElementById('sch-title-custom').value=existTitle}
-  document.getElementById('sch-custom-row').style.display=sel.value==='その他（自由入力）'?'block':'none'
   document.getElementById('sch-title-custom').value=SCH_OPTS.includes(defaultTitle)?(s.sch?.note||''):defaultTitle
   const isSchFlag=s.scheduling||false
   document.getElementById('sch-scheduling').checked=isSchFlag
@@ -1038,7 +1036,7 @@ function openScheduleModal(stuId,e){
   document.getElementById('sch-date').disabled=false
   document.getElementById('sch-time').disabled=false
   document.getElementById('sch-loc-detail').value=s.sch?.locDetail||''
-  document.getElementById('sch-note').value=s.sch?.note||''
+  document.getElementById('sch-title-custom').value=s.sch?.note||''
   document.getElementById('sch-clear-btn').style.display=s.sch?'':'none'
   schLocType=s.sch?.loc||'WEB';document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))
   if(!s.sch?.time)autoFillSchTime()
@@ -1069,7 +1067,7 @@ function saveSchedule(){
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
-    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;const _schNote=document.getElementById('sch-note')?.value||'';if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
+    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;const _schNote=document.getElementById('sch-title-custom')?.value||'';if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
     else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch)s.sch.evId=_nev.id}
   }
   _saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
