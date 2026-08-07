@@ -989,7 +989,7 @@ function submitEvent(){
     _dirtyEvents.add(editEvId)
     closeModal('ov-event')
     toast('「'+ev.title+'」を更新しました')
-    const cur=getCur();if(cur==='evnt')renderEvList();if(cur==='dash')renderDash()
+    const cur=getCur();if(cur==='evnt')renderEvList();if(cur==='dash')renderDash();scheduleSave()
     return
   }
   // Create new event
