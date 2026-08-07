@@ -315,12 +315,12 @@ html,body{height:100%;overflow:hidden}
   <div class="m-body">
     <div id="ev-edit-title-row" class="f-row" style="display:none"><label class="f-lbl">イベント名</label><div id="ev-edit-title-display" style="font-size:13px;font-weight:500;padding:4px 0;color:#333"></div></div>
     <div id="ev-type-row" class="f-row"><label class="f-lbl">種別</label><select class="f-sel" id="f-ev-type"><option>説明会</option><option>面談</option><option>インターン</option><option>座談会</option><option>懇親会</option></select></div>
-    <div class="f-2"><div class="f-row"><label class="f-lbl">開催日</label><input class="f-inp" type="date" id="f-ev-date"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="f-ev-time" value="14:00"></div></div>
+    
+    <div class="f-row"><label class="f-lbl">内容（メモ）</label><input class="f-inp" id="f-ev-note" placeholder="自由記述"></div><div class="f-2"><div class="f-row"><label class="f-lbl">開催日</label><input class="f-inp" type="date" id="f-ev-date"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="f-ev-time" value="14:00"></div></div>
     <div class="f-row"><label class="f-lbl">場所</label>
       <div class="loc-toggle" id="ev-loc-toggle"><div class="loc-opt" onclick="setEvLoc('対面',this)">対面</div><div class="loc-opt on" onclick="setEvLoc('WEB',this)">WEB</div></div>
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="f-ev-loc-detail"></div>
-    <div class="f-row"><label class="f-lbl">内容（メモ）</label><input class="f-inp" id="f-ev-note" placeholder="自由記述"></div>
     <div class="f-row" style="margin-top:6px"><label class="f-lbl">企業側参加者</label>
       <div>
         <div id="ev-staff-toggles" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px"></div>
@@ -1297,9 +1297,9 @@ function selStu(id,refresh){
   <div class="dp-sec"><div class="dp-st orange">志望職種</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.jobTags||[]).map(t=>`<span class="tag-p" style="background:#e6f1fb;color:#0c447c;border-color:#b5d4f4">${t}</span>`).join('')||'<span style="font-size:11px;color:#ccc">未設定</span>'}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><textarea onblur="dpMemoUpdate(${s.id},this.value)" style="width:100%;box-sizing:border-box;font-size:12px;padding:5px 7px;border:1px solid #ddd;border-radius:4px;resize:vertical;background:#fafafa;min-height:60px;font-family:inherit">${s.memo||''}</textarea></div>
   <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{
-    const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px||px.attended!=='yes')return[];return[{d:(ev.date||'').slice(5).replace('-','/'),s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',ev:true}]}).sort((a,b)=>a.d<b.d?-1:1);
+    const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px||px.attended!=='yes')return[];return[{d:(ev.date||'').slice(5).replace('-','/'),s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',note:ev.note||'',ev:true}]}).sort((a,b)=>a.d<b.d?-1:1);
     const firstEntry=(s.hist||[]).find(h=>h.s==='エントリー');const entryHist=firstEntry?[firstEntry]:[];
-    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:#4a90d9"><div class="tl-d">${h.d}</div><div class="tl-s" style="color:#1a5fa8">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`)];
+    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:#4a90d9"><div class="tl-d">${h.d}</div><div class="tl-s" style="color:#1a5fa8">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`)];
     return all.length?all.join(''):'<div style="font-size:11px;color:#aaa">履歴なし</div>'
   })()}</div></div>`
   renderStu()
