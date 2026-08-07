@@ -320,6 +320,7 @@ html,body{height:100%;overflow:hidden}
       <div class="loc-toggle" id="ev-loc-toggle"><div class="loc-opt" onclick="setEvLoc('対面',this)">対面</div><div class="loc-opt on" onclick="setEvLoc('WEB',this)">WEB</div></div>
     </div>
     <div class="f-row"><label class="f-lbl">会場・URL</label><input class="f-inp" id="f-ev-loc-detail"></div>
+    <div class="f-row"><label class="f-lbl">内容（メモ）</label><input class="f-inp" id="f-ev-note" placeholder="自由記述"></div>
     <div class="f-row" style="margin-top:6px"><label class="f-lbl">企業側参加者</label>
       <div>
         <div id="ev-staff-toggles" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px"></div>
@@ -895,6 +896,7 @@ function openEvModal(evId){
   document.getElementById('f-ev-date').value=ev?ev.date:''
   document.getElementById('f-ev-time').value=ev?ev.time:'14:00'
   document.getElementById('f-ev-loc-detail').value=ev?ev.locDetail||'':''
+  document.getElementById('f-ev-note').value=ev?ev.note||'':''
   buildEvStaffToggles(ev?.staff||[])
   document.getElementById('ev-staff-inp').value=''
   document.getElementById('ov-event').classList.add('show')
@@ -975,15 +977,15 @@ function _getSchStaff(){
   return [...preset,...extra]
 }
 function submitEvent(){
-  const date=document.getElementById('f-ev-date').value;const time=document.getElementById('f-ev-time').value;const locDetail=document.getElementById('f-ev-loc-detail').value
+  const date=document.getElementById('f-ev-date').value;const time=document.getElementById('f-ev-time').value;const locDetail=document.getElementById('f-ev-loc-detail').value;const note=document.getElementById('f-ev-note')?.value||''
   if(!date){toast('日付を入力してください');return}
   const staff=_getEvStaff()
   if(editEvId){
     // Edit existing event
     const ev=EVENTS.find(x=>x.id===editEvId);if(!ev)return
     pushUndo()
-    ev.date=date;ev.time=time;ev.loc=evLocType;ev.locDetail=locDetail;ev.staff=staff
-    ev.pax.forEach(p=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(stu&&stu.sch&&(ev.title.startsWith(stu.sch.title)||stu.sch.title===ev.title)){stu.sch.locDetail=locDetail;stu.sch.staff=[...staff];stu.sch.loc=evLocType;stu.sch.date=date;stu.sch.time=time;stu._updatedAt=Date.now()}})
+    ev.date=date;ev.time=time;ev.loc=evLocType;ev.locDetail=locDetail;ev.staff=staff;ev.note=note
+    ev.pax.forEach(p=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(stu&&stu.sch&&(ev.title.startsWith(stu.sch.title)||stu.sch.title===ev.title)){stu.sch.locDetail=locDetail;stu.sch.staff=[...staff];stu.sch.loc=evLocType;stu.sch.date=date;stu.sch.time=time;stu.sch.note=note;stu._updatedAt=Date.now()}})
     _dirtyEvents.add(editEvId)
     closeModal('ov-event')
     toast('「'+ev.title+'」を更新しました')
@@ -1027,7 +1029,7 @@ function openScheduleModal(stuId,e){
   if(SCH_OPTS.includes(defaultTitle)){sel.value=defaultTitle}
   else{sel.value='その他（自由入力）';document.getElementById('sch-title-custom').value=existTitle}
   document.getElementById('sch-custom-row').style.display=sel.value==='その他（自由入力）'?'block':'none'
-  document.getElementById('sch-title-custom').value=SCH_OPTS.includes(defaultTitle)?'':defaultTitle
+  document.getElementById('sch-title-custom').value=SCH_OPTS.includes(defaultTitle)?(s.sch?.note||''):defaultTitle
   const isSchFlag=s.scheduling||false
   document.getElementById('sch-scheduling').checked=isSchFlag
   document.getElementById('sch-date').value=isSchFlag?'':(s.sch?.date||localDateStr())
@@ -1056,7 +1058,7 @@ function saveSchedule(){
   const title=selVal==='その他（自由入力）'?document.getElementById('sch-title-custom').value:selVal
   const isSchFlag=document.getElementById('sch-scheduling').checked
   const date=isSchFlag?null:document.getElementById('sch-date').value;const time=isSchFlag?null:document.getElementById('sch-time').value;const locDetail=document.getElementById('sch-loc-detail').value
-  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff()};s.scheduling=isSchFlag;if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
+  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff(),note:document.getElementById('sch-title-custom')?.value||''};s.scheduling=isSchFlag;if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
   // Move student to matching stage if title matches a pipeline column label
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
@@ -1065,7 +1067,7 @@ function saveSchedule(){
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
-    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
+    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;matchEv.note=s.sch?.note||'';matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
     else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch)s.sch.evId=_nev.id}
   }
   _saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')renderEvList();if(selId===schStuId)selStu(schStuId,true)
