@@ -1296,7 +1296,7 @@ function selStu(id,refresh){
   <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{
     const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px||px.attended!=='yes')return[];return[{d:(ev.date||'').slice(5).replace('-','/'),s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',ev:true}]}).sort((a,b)=>a.d<b.d?-1:1);
     const firstEntry=(s.hist||[]).find(h=>h.s==='エントリー');const entryHist=firstEntry?[firstEntry]:[];
-    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:#4a90d9"><div class="tl-d">${h.d}</div><div class="tl-s" style="color:#1a5fa8">${h.s}</div></div>`)];
+    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:#4a90d9"><div class="tl-d">${h.d}</div><div class="tl-s" style="color:#1a5fa8">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}</div>`)];
     return all.length?all.join(''):'<div style="font-size:11px;color:#aaa">履歴なし</div>'
   })()}</div></div>`
   renderStu()
