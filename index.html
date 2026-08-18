@@ -2081,6 +2081,7 @@ function renderAnal(){
 function showStuOverlay(id){
   const navEl=document.querySelectorAll('.ni')[1]
   go('stud',navEl)
+  const _s=STUDENTS.find(x=>x.id===id);if(_s){sqry=_s.ln+_s.fn;const _inp=document.querySelector('input.fi[placeholder]');if(_inp)_inp.value=sqry;renderStu()}
   setTimeout(()=>selStu(id,true),30)
 }
 
