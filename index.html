@@ -1314,7 +1314,7 @@ function openEventTab(evId){
   selEvId=evId
   renderEvList()
 }
-function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);setTimeout(()=>selStu(id),50)}
+function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);const _s=STUDENTS.find(x=>x.id===id);if(_s){sqry=_s.ln+_s.fn;const _inp=document.querySelector('input.fi[placeholder]');if(_inp)_inp.value=sqry;renderStu()}setTimeout(()=>selStu(id),50)}
 function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
 function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu()}
 function dpMemoUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.memo=val;renderDash()}
