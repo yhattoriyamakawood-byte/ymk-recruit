@@ -172,7 +172,7 @@ html,body{height:100%;overflow:hidden}
 .tbl-date:hover{border-color:var(--bd2);background:var(--bg)}
 .tbl-date:focus{border-color:#999;background:#fff}
 .memo{background:var(--bg2);border-radius:5px;padding:7px;font-size:12px;color:var(--tx2);min-height:36px;white-space:pre-wrap;border:1px solid var(--bd)}
-.tl-item{position:relative;padding:0 0 8px 14px;font-size:12px}
+.tl-item{position:relative;padding:0 0 8px 14px;font-size:12px;overflow:hidden}
 .tl-item::before{content:'';position:absolute;left:-1px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--bd2)}
 .tl-item.cur::before{background:#111;width:9px;height:9px;left:-2px;top:3px}
 .tl-item:not(:last-child)::after{content:'';position:absolute;left:2px;top:10px;bottom:0;width:1px;background:var(--bd)}
@@ -1299,7 +1299,7 @@ function selStu(id,refresh){
   <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{
     const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px)return[];return[{d:(ev.date||'').slice(5).replace('-','/'),s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',note:ev.note||'',ev:true,scheduled:px.attended!=='yes'}]}).sort((a,b)=>a.d<b.d?-1:1);
     const firstEntry=(s.hist||[]).find(h=>h.s==='エントリー');const entryHist=firstEntry?[firstEntry]:[];
-    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:${h.scheduled?'#f39c12':'#4a90d9'}"><div class="tl-d">${h.d}${h.scheduled?'<span style="font-size:9px;background:#f39c12;color:#fff;border-radius:3px;padding:1px 4px;margin-left:4px">予定</span>':''}<div class="tl-s" style="color:${h.scheduled?'#d35400':'#1a5fa8'}">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`)];
+    const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:${h.scheduled?'#f39c12':'#4a90d9'}"><div class="tl-d">${h.d}<div class="tl-s" style="color:${h.scheduled?'#d35400':'#1a5fa8'}">${h.s}${h.scheduled?'<span style="font-size:9px;background:#f39c12;color:#fff;border-radius:3px;padding:1px 4px;margin-left:4px">予定</span>':''}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`)];
     return all.length?all.join(''):'<div style="font-size:11px;color:#aaa">履歴なし</div>'
   })()}</div></div>`
   renderStu()
