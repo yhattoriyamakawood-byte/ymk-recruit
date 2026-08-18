@@ -414,7 +414,7 @@ html,body{height:100%;overflow:hidden}
     <div class="sc" id="sc-stud" style="flex-direction:row">
       <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0">
         <div class="fb">
-          <input class="fi" style="width:140px" placeholder="氏名・大学" oninput="sqry=this.value;renderStu()">
+          <span style="position:relative;display:inline-flex;align-items:center"><input class="fi" id="sqry-inp" style="width:140px;padding-right:18px" placeholder="氏名・大学" oninput="sqry=this.value;renderStu();document.getElementById('sqry-clr').style.display=this.value?'flex':'none'"><span id="sqry-clr" onclick="sqry='';document.getElementById('sqry-inp').value='';this.style.display='none';renderStu()" style="position:absolute;right:4px;cursor:pointer;color:#999;font-size:11px;display:none;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#e0e0e0">×</span></span>
           <select class="fi" id="filter-media" onchange="smedia=this.value;renderStu()"><option value="">全媒体</option></select>
           <div style="position:relative" id="stage-filter-wrap">
             <button class="fi" id="stage-filter-btn" onclick="toggleStageMenu(event)" style="cursor:pointer;display:flex;align-items:center;gap:4px;min-width:90px;justify-content:space-between;background:#fff">
@@ -1314,7 +1314,7 @@ function openEventTab(evId){
   selEvId=evId
   renderEvList()
 }
-function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);const _s=STUDENTS.find(x=>x.id===id);if(_s){sqry=_s.ln+_s.fn;const _inp=document.querySelector('input.fi[placeholder]');if(_inp)_inp.value=sqry;renderStu()}setTimeout(()=>selStu(id),50)}
+function openStuFromRem(id){go('stud',document.querySelectorAll('.ni')[2]);const _s=STUDENTS.find(x=>x.id===id);if(_s){sqry=_s.ln+_s.fn;const _inp=document.querySelector('input.fi[placeholder]');if(_inp){_inp.value=sqry;const _c=document.getElementById('sqry-clr');if(_c)_c.style.display='flex'}renderStu()}setTimeout(()=>selStu(id),50)}
 function remLcUpdate(stuId){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=localDateStr();s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu();if(selId===stuId)selStu(stuId,true)}
 function dpLcUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.lc=val;s._updatedAt=Date.now();_saveSingleStudent(stuId);renderDash();if(getCur()==='stud')renderStu()}
 function dpMemoUpdate(stuId,val){const s=STUDENTS.find(x=>x.id===stuId);if(!s)return;pushUndo();s.memo=val;renderDash()}
