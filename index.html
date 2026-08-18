@@ -1337,6 +1337,7 @@ function selPipeStu(id){
   dp.classList.remove('hide')
   selStu(id,true)
   dp.innerHTML=document.getElementById('dp').innerHTML
+  const _cb=dp.querySelector('button[onclick]');if(_cb)_cb.setAttribute('onclick','selPipeStu('+id+')')
   renderKB()
 }
 function renderKB(){
