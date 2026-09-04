@@ -1324,7 +1324,7 @@ function renderDash(){
   const active=sts.filter(s=>!['辞退','不合格','内定辞退'].includes(s.stage))
   const acc=sts.filter(s=>s.stage==='内定承諾').length,offer=sts.filter(s=>['承諾待ち','内定承諾','内定辞退'].includes(s.stage)).length
   document.getElementById('dash-stats').innerHTML=`<div class="sc-card"><div class="sc-lbl">エントリー</div><div class="sc-val">${sts.length}</div><div class="sc-sub">${selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'}</div></div><div class="sc-card"><div class="sc-lbl">内定承諾</div><div class="sc-val">${acc}</div><div class="sc-sub">目標 20名</div></div><div class="sc-card"><div class="sc-lbl">達成率</div><div class="sc-val">${acc?Math.round(acc/20*100)+'%':'—'}</div><div class="sc-sub">残 ${Math.max(0,20-acc)}名</div></div><div class="sc-card"><div class="sc-lbl">離脱</div><div class="sc-val">${sts.filter(s=>['辞退','不合格','内定辞退'].includes(s.stage)).length}</div><div class="sc-sub">辞退+不合格</div></div>`
-  // パイプライン実績ファネル（各ステージの現在人数）
+  // パイプライン実績ファネル（各ステージの累積人数）
   const FUNNEL_DEF=[
     {lbl:'エントリー',    stages:['エントリー'],       color:'#bbb'},
     {lbl:'個別面談',      stages:['個別面談'],          color:'#999'},
@@ -1341,7 +1341,7 @@ function renderDash(){
     {lbl:'不合格',        stages:['不合格'],             color:'#aaa'},
     {lbl:'辞退',          stages:['辞退'],               color:'#ccc'},
   ]
-  const fn=FUNNEL_DEF.map(f=>sts.filter(s=>f.stages.includes(s.stage)).length)
+  const fn=FUNNEL_DEF.map(f=>sts.filter(s=>(s.hist||[{s:s.stage}]).some(h=>f.stages.includes(h.s))).length)
   const fl=FUNNEL_DEF.map(f=>f.lbl),fc=FUNNEL_DEF.map(f=>f.color)
   const fnMax=Math.max(...fn,1)
   document.getElementById('funnel').innerHTML=fn.map((v,i)=>`<div class="fn-row"><div class="fn-lbl" style="width:80px;font-size:10px">${fl[i]}</div><div class="fn-bar"><div class="fn-fill" style="width:${Math.round(v/fnMax*100)}%;background:${fc[i]}">${v>0?v:''}</div></div><div class="fn-n">${v}</div></div>`).join('')
