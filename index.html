@@ -1354,7 +1354,8 @@ function renderDash(){
     {lbl:'不合格',        stages:['不合格'],             color:'#aaa'},
     {lbl:'辞退',          stages:['辞退'],               color:'#ccc'},
   ]
-  const fn=FUNNEL_DEF.map(f=>sts.filter(s=>(s.hist||[{s:s.stage}]).some(h=>f.stages.includes(h.s))).length)
+  const EV_FMAP={'個別面談':'個別面談','インターン':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','フォロー':'フォローイベント'}
+  const fn=FUNNEL_DEF.map(f=>{if(f.lbl==='エントリー')return sts.length;const et=EV_FMAP[f.lbl];if(et){const ids=new Set();EVENTS.filter(ev=>ev.title.includes(et)).forEach(ev=>{(ev.pax||[]).forEach(p=>{if(p.attended==='yes')ids.add(p.stuId)})});return sts.filter(s=>ids.has(s.id)).length}return sts.filter(s=>f.stages.includes(s.stage)).length})
   const fl=FUNNEL_DEF.map(f=>f.lbl),fc=FUNNEL_DEF.map(f=>f.color)
   const fnMax=Math.max(...fn,1)
   document.getElementById('funnel').innerHTML=fn.map((v,i)=>`<div class="fn-row"><div class="fn-lbl" style="width:80px;font-size:10px">${fl[i]}</div><div class="fn-bar"><div class="fn-fill" style="width:${Math.round(v/fnMax*100)}%;background:${fc[i]}">${v>0?v:''}</div></div><div class="fn-n">${v}</div></div>`).join('')
