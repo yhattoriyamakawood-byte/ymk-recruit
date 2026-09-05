@@ -1323,7 +1323,20 @@ function renderDash(){
   const sts=STUDENTS.filter(s=>yrMatch(s))
   const active=sts.filter(s=>!['辞退','不合格','内定辞退'].includes(s.stage))
   const acc=sts.filter(s=>s.stage==='内定承諾').length,offer=sts.filter(s=>['承諾待ち','内定承諾','内定辞退'].includes(s.stage)).length
-  document.getElementById('dash-stats').innerHTML=`<div class="sc-card"><div class="sc-lbl">エントリー</div><div class="sc-val">${sts.length}</div><div class="sc-sub">${selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'}</div></div><div class="sc-card"><div class="sc-lbl">内定承諾</div><div class="sc-val">${acc}</div><div class="sc-sub">目標 20名</div></div><div class="sc-card"><div class="sc-lbl">達成率</div><div class="sc-val">${acc?Math.round(acc/20*100)+'%':'—'}</div><div class="sc-sub">残 ${Math.max(0,20-acc)}名</div></div><div class="sc-card"><div class="sc-lbl">離脱</div><div class="sc-val">${sts.filter(s=>['辞退','不合格','内定辞退'].includes(s.stage)).length}</div><div class="sc-sub">辞退+不合格</div></div>`
+    const yr1=selYears.size===1?[...selYears][0]:null
+  const GOAL_ENTRY=yr1===2028?670:null
+  const GOAL_ACC=yr1===2028?10:20
+  const offerStages=['承諾待ち','内定承諾','内定辞退']
+  const offerSts=sts.filter(s=>offerStages.includes(s.stage))
+  const accSts=sts.filter(s=>s.stage==='内定承諾')
+  const decSts=sts.filter(s=>s.stage==='内定辞退')
+  const waitSts=sts.filter(s=>s.stage==='承諾待ち')
+  const JOB_TAGS=['営業','プランナー','設計','工務','経戦']
+  const jobBD=(grp)=>{const c=JOB_TAGS.map(t=>{const n=grp.filter(s=>(s.jobTags||[]).includes(t)).length;return n?'<span style="font-size:9px;color:#888;background:#f5f5f5;padding:1px 4px;border-radius:3px">'+t+':'+n+'</span>':''}).filter(Boolean);return c.length?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">'+c.join('')+'</div>':''}
+  const yrLbl=selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'
+  const eGoal=GOAL_ENTRY?'目標'+GOAL_ENTRY+'名・残'+Math.max(0,GOAL_ENTRY-sts.length)+'名':yrLbl
+  const aGoal='目標'+GOAL_ACC+'名・残'+Math.max(0,GOAL_ACC-accSts.length)+'名'
+  document.getElementById('dash-stats').innerHTML='<div class="sc-card"><div class="sc-lbl">① エントリー</div><div class="sc-val">'+sts.length+'</div><div class="sc-sub">'+eGoal+'</div></div>'+'<div class="sc-card"><div class="sc-lbl">② 内定出し</div><div class="sc-val">'+offerSts.length+'</div>'+jobBD(offerSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">③ 内定承諾</div><div class="sc-val">'+accSts.length+'</div><div class="sc-sub">'+aGoal+'</div>'+jobBD(accSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">④ 内定辞退</div><div class="sc-val">'+decSts.length+'</div>'+jobBD(decSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">⑤ 承諾待ち</div><div class="sc-val">'+waitSts.length+'</div>'+jobBD(waitSts)+'</div>'
   // パイプライン実績ファネル（各ステージの累積人数）
   const FUNNEL_DEF=[
     {lbl:'エントリー',    stages:['エントリー'],       color:'#bbb'},
