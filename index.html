@@ -282,7 +282,7 @@ html,body{height:100%;overflow:hidden}
     <div class="f-row">
       <label class="f-lbl">内容</label>
       <select class="f-sel" id="sch-title-sel" onchange="onSchTitleChange()">
-        <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定承諾</option><option>内定辞退</option><option>内定承諾面談</option><option>フォローイベント</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
+        <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定後フォロー</option><option>内定承諾</option><option>内定辞退</option><option>内定承諾面談</option><option>フォローイベント</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
     </div>
     <div class="f-row" id="sch-custom-row"><label class="f-lbl">メモ</label><input class="f-inp" id="sch-title-custom"></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date" onchange="if(this.value){const cb=document.getElementById('sch-scheduling');if(cb.checked){cb.checked=false;const t=document.getElementById('sch-time');if(!t.value)t.value='10:00'};autoFillSchTime()}"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
@@ -680,7 +680,7 @@ async function _initApp(){
 const RKMAP={'A+':'rk-ap','A':'rk-a','B+':'rk-bp','B':'rk-b','C':'rk-c'}
 const WDAYS=['日','月','火','水','木','金','土']
 const KB_MAIN=[{id:'entry',lbl:'エントリー'},{id:'iv',lbl:'個別面談'},{id:'intern',lbl:'インターンシップ'},{id:'gw',lbl:'グループワーク'},{id:'rc1',lbl:'RC面談①'},{id:'exec',lbl:'役員面接'},{id:'rc2',lbl:'RC面談②'},{id:'final',lbl:'最終面接'}]
-const KB_OFFER=[{id:'offer_wait',lbl:'承諾待ち'},{id:'offer_acc',lbl:'内定承諾'},{id:'offer_dec',lbl:'内定辞退'}]
+const KB_OFFER=[{id:'offer_wait',lbl:'承諾待ち'},{id:'offer_follow',lbl:'内定後フォロー'},{id:'offer_acc',lbl:'内定承諾'},{id:'offer_dec',lbl:'内定辞退'}]
 const KB_FOLLOW=[{id:'follow',lbl:'フォローイベント'}]
 const KB_EXIT=[{id:'fail',lbl:'不合格'},{id:'decline',lbl:'辞退'}]
 const ALL_COLS=[...KB_MAIN,...KB_OFFER,...KB_FOLLOW,...KB_EXIT]
@@ -1300,6 +1300,7 @@ function stgClass(stage){
     '役員面接':'stg-final',
     '最終面接':'stg-final',
     '内定':'stg-offer',
+    '内定後フォロー':'stg-offer',
     '内定承諾':'stg-offer',
     '承諾待ち':'stg-pending',
     '辞退':'stg-exit',
@@ -1348,6 +1349,7 @@ function renderDash(){
     {lbl:'RC面談②',      stages:['RC面談②'],           color:'#444'},
     {lbl:'最終面接',      stages:['最終面接'],           color:'#333'},
     {lbl:'承諾待ち',      stages:['承諾待ち'],           color:'#2e6b2e'},
+    {lbl:'内定後フォロー',stages:['内定後フォロー'],color:'#357a47'},
     {lbl:'内定承諾',      stages:['内定承諾'],           color:'#27500a'},
     {lbl:'内定辞退',      stages:['内定辞退'],           color:'#c0392b'},
     {lbl:'フォロー',      stages:['フォローイベント'],   color:'#e67e22'},
@@ -1356,7 +1358,7 @@ function renderDash(){
   ]
   const EV_FMAP={'個別面談':'個別面談','インターン':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','フォロー':'フォローイベント'}
   const fn=FUNNEL_DEF.map(f=>{if(f.lbl==='エントリー')return sts.length;const et=EV_FMAP[f.lbl];if(et){const ids=new Set();EVENTS.filter(ev=>ev.title.includes(et)).forEach(ev=>{(ev.pax||[]).forEach(p=>{if(p.attended==='yes')ids.add(p.stuId)})});return sts.filter(s=>ids.has(s.id)).length}return sts.filter(s=>f.stages.includes(s.stage)).length})
-  const fstu=FUNNEL_DEF.map((f,i)=>{if(i<4||i>10)return null;const et=EV_FMAP[f.lbl];if(et){const ids=new Set();EVENTS.filter(ev=>ev.title.includes(et)).forEach(ev=>{(ev.pax||[]).forEach(p=>{if(p.attended==='yes')ids.add(p.stuId)})});return sts.filter(s=>ids.has(s.id))}return sts.filter(s=>f.stages.includes(s.stage))})
+  const fstu=FUNNEL_DEF.map((f,i)=>{if(i<4||i>11)return null;const et=EV_FMAP[f.lbl];if(et){const ids=new Set();EVENTS.filter(ev=>ev.title.includes(et)).forEach(ev=>{(ev.pax||[]).forEach(p=>{if(p.attended==='yes')ids.add(p.stuId)})});return sts.filter(s=>ids.has(s.id))}return sts.filter(s=>f.stages.includes(s.stage))})
   const fl=FUNNEL_DEF.map(f=>f.lbl),fc=FUNNEL_DEF.map(f=>f.color)
   const fnMax=Math.max(...fn,1)
   document.getElementById('funnel').innerHTML=fn.map((v,i)=>{const sl=fstu[i];const hasStu=sl&&sl.length;const stuDiv=hasStu?`<div id="fn-stu-${i}" style="display:none;flex-basis:100%;padding:2px 0 4px 88px;flex-wrap:wrap;gap:3px">${sl.map(s=>`<span style="font-size:9px;background:#f5f5f5;padding:1px 4px;border-radius:3px;color:#555;white-space:nowrap">${s.ln}${s.fn}${(s.jobTags||[]).length?'('+s.jobTags.join('/')+')':''}</span>`).join('')}</div>`:'';const infoBtn=hasStu?`<button onclick="const d=document.getElementById('fn-stu-${i}');d.style.display=d.style.display==='flex'?'none':'flex'" style="border:none;background:none;cursor:pointer;color:#bbb;font-size:12px;padding:0 2px" title="学生を表示">&#9432;</button>`:'<span style="display:inline-block;width:20px"></span>';return`<div class="fn-row" style="flex-wrap:wrap;align-items:center">${infoBtn}<div class="fn-lbl" style="width:80px;font-size:10px">${fl[i]}</div><div class="fn-bar"><div class="fn-fill" style="width:${Math.round(v/fnMax*100)}%;background:${fc[i]}">${v>0?v:''}</div></div><div class="fn-n">${v}</div>${stuDiv}</div>`}).join('')
