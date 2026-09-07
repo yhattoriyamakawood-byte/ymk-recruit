@@ -1332,7 +1332,7 @@ function renderDash(){
   const decSts=sts.filter(s=>s.stage==='内定辞退')
   const waitSts=sts.filter(s=>s.stage==='承諾待ち')
   const JOB_TAGS=['営業','プランナー','設計','工務','経戦']
-  const jobBD=(grp)=>{const groups={};grp.forEach(s=>{const key=(s.jobTags||[]).slice().sort().join('/')||'未設定';groups[key]=(groups[key]||0)+1});const c=Object.entries(groups).map(([k,n])=>'<span style="font-size:9px;color:#888;background:#f5f5f5;padding:1px 4px;border-radius:3px">'+k+':'+n+'</span>'));return c.length?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">'+c.join('')+'</div>':''}
+  const jobBD=(grp)=>{const groups={};grp.forEach(s=>{const key=(s.jobTags||[]).slice().sort().join('/')||'未設定';groups[key]=(groups[key]||0)+1});const c=Object.entries(groups).map(([k,n])=>'<span style="font-size:9px;color:#888;background:#f5f5f5;padding:1px 4px;border-radius:3px">'+k+':'+n+'</span>');return c.length?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">'+c.join('')+'</div>':''}
   const yrLbl=selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'
   const eGoal=GOAL_ENTRY?'目標'+GOAL_ENTRY+'名・残'+Math.max(0,GOAL_ENTRY-sts.length)+'名':yrLbl
   const aGoal='目標'+GOAL_ACC+'名・残'+Math.max(0,GOAL_ACC-accSts.length)+'名'
