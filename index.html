@@ -1327,11 +1327,11 @@ function renderDash(){
     const yr1=selYears.size===1?[...selYears][0]:null
   const GOAL_ENTRY=yr1===2028?670:null
   const GOAL_ACC=yr1===2028?10:20
-  const offerStages=['承諾待ち','内定承諾','内定辞退']
+  const offerStages=['承諾待ち','内定後フォロー','内定承諾','内定辞退']
   const offerSts=sts.filter(s=>offerStages.includes(s.stage))
   const accSts=sts.filter(s=>s.stage==='内定承諾')
   const decSts=sts.filter(s=>s.stage==='内定辞退')
-  const waitSts=sts.filter(s=>s.stage==='承諾待ち')
+  const waitSts=sts.filter(s=>s.stage==='承諾待ち'||s.stage==='内定後フォロー')
   const JOB_TAGS=['営業','プランナー','設計','工務','経戦']
   const jobBD=(grp)=>{const groups={};grp.forEach(s=>{const key=(s.jobTags||[]).slice().sort().join('/')||'未設定';if(!groups[key])groups[key]=[];groups[key].push(s)});const c=Object.entries(groups).map(([k,ss],gi)=>{const n=ss.length;const uid='jbd'+Date.now()+gi;const stuList=ss.map(s=>(s.ln||'')+(s.fn||'')+'('+s.yr+'卒)').join('、');return'<span style="display:inline-flex;align-items:center;gap:2px;font-size:9px;color:#888;background:#f5f5f5;padding:1px 4px;border-radius:3px;position:relative">'+k+':'+n+'<button onclick="(function(d){d.style.display=d.style.display===\'block\'?\'none\':\'block\'})(this.nextSibling)" style="border:none;background:none;cursor:pointer;color:#bbb;font-size:10px;padding:0 1px">&#9432;</button><div style="display:none;position:absolute;bottom:110%;left:0;background:white;border:1px solid #ddd;padding:4px 8px;border-radius:4px;z-index:999;font-size:10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)">'+stuList+'</div></span>'});return c.length?'<div style="margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">'+c.join('')+'</div>':''}
   const yrLbl=selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'
