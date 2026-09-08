@@ -1157,7 +1157,7 @@ function saveSchedule(){
 }
 function clearSchedule(){pushUndo();const s=STUDENTS.find(x=>x.id===schStuId);if(!s)return;s.sch=null;s.scheduling=false;closeModal('ov-schedule');syncPipelineEvents();toast('日程をクリアしました');const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)}
 
-function go(scr,el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById('sc-'+scr).classList.add('on');document.getElementById('hdr-t').textContent={dash:'ダッシュボード',pipe:'選考ステップ',stud:'学生名簿',evnt:'イベント一覧',faze:'選考分析',anal:'媒体分析'}[scr];if(scr==='stud')renderStu();if(scr==='pipe')renderKB();if(scr==='dash')renderDash();if(scr==='anal')renderAnal();if(scr==='evnt')if(scr==='faze')renderFaze()}
+function go(scr,el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById('sc-'+scr).classList.add('on');document.getElementById('hdr-t').textContent={dash:'ダッシュボード',pipe:'選考ステップ',stud:'学生名簿',evnt:'イベント一覧',faze:'選考分析',anal:'媒体分析'}[scr];if(scr==='stud')renderStu();if(scr==='pipe')renderKB();if(scr==='dash')renderDash();if(scr==='anal')renderAnal();if(scr==='evnt')renderEvList();if(scr==='faze')renderFaze()}
 function syncPipelineEvents(){
   const PIPE_STAGES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
   // イベントは削除しない — スケジュールデータから不足分だけ追加する
