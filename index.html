@@ -1340,8 +1340,8 @@ function renderDash(){
   const yrs=selYears.size>0?[...selYears].sort((a,b)=>a-b):null;
   const mkCard=(lbl,arr,sub,bdfn)=>{
     if(yrs&&yrs.length>1){
-      const secs=yrs.map(y=>{const ya=arr.filter(s=>s.yr===y);return'<div style="border-top:1px solid #eee;padding:4px 0 2px"><div style="font-size:10px;color:#999">'+y+'年卒</div><div class="sc-val">'+ya.length+'</div>'+(bdfn?bdfn(ya):'')+' </div>'}).join('');
-      return'<div class="sc-card"><div class="sc-lbl">'+lbl+'</div>'+secs+'</div>';
+      const cols=yrs.map((y,i)=>{const ya=arr.filter(s=>s.yr===y);return'<div style="flex:1;min-width:0'+(i>0?';border-left:1px solid #eee;padding-left:8px':'')+'">'+'<div style="font-size:10px;color:#999;margin-bottom:2px">'+y+'年卒</div><div class="sc-val">'+ya.length+'</div>'+(bdfn?bdfn(ya):'')+' </div>'}).join('');
+      return'<div class="sc-card"><div class="sc-lbl">'+lbl+'</div><div style="display:flex;gap:0;margin-top:4px;padding-top:4px;border-top:1px solid #eee">'+cols+'</div></div>';
     }
     return'<div class="sc-card"><div class="sc-lbl">'+lbl+'</div><div class="sc-val">'+arr.length+'</div>'+(sub?'<div class="sc-sub">'+sub+'</div>':'')+(bdfn?bdfn(arr):'')+' </div>';
   };
