@@ -1587,7 +1587,7 @@ function removePaxStu(evId,stuId,e){
   _dirtyEvents.add(evId)
   const stu=STUDENTS.find(s=>s.id===stuId)
   if(stu&&stu.sch){stu.sch=null;stu._updatedAt=Date.now();_saveSingleStudent(stuId)}
-  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw();renderEvList()}
+  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}
   toast('イベントから削除しました')
 }
 function togglePaxStatus(evId,pi,field,val,e){
@@ -1608,7 +1608,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
-  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;if(window._evListDraw)window._evListDraw();renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
+  const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
 function deleteEvent(evId,e){
