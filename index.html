@@ -753,7 +753,7 @@ function undo(){
   const ub=document.getElementById('undo-btn');if(ub){ub.style.opacity=_undoStack.length?'1':'0.4';ub.style.pointerEvents=_undoStack.length?'auto':'none'}
   const rb=document.getElementById('redo-btn');if(rb){rb.style.opacity='1';rb.style.pointerEvents='auto'}
   syncPipelineEvents();buildYrDD();buildMediaDDs();renderDash();renderStu()
-  const cur=getCur();if(cur==='pipe')renderKB();if(cur==='evnt')if(cur==='faze')renderFaze();if(cur==='anal')renderAnal()
+  const cur=getCur();if(cur==='pipe')renderKB();if(cur==='evnt')renderEvList();if(cur==='faze')renderFaze();if(cur==='anal')renderAnal()
   toast('元に戻しました')
 }
 function redo(){
@@ -1254,7 +1254,7 @@ function toggleYrDD(e){e.stopPropagation();const dd=document.getElementById('yr-
 document.addEventListener('click',()=>{const dd=document.getElementById('yr-dd');if(dd)dd.style.display='none'})
 function addYearKey(e){if(e.key==='Enter')addYearFromInput()}
 function addYearFromInput(){const inp=document.getElementById('yr-add-inp');const v=parseInt(inp.value.trim());if(!v||isNaN(v))return;if(!YEARS.includes(v)){YEARS.push(v);YEARS.sort()}selYears.add(v);inp.value='';buildYrDD();refreshAll()}
-function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();}
+function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList();}
 function yrMatch(s){return selYears.size===0||selYears.has(s.yr)}
 function toggleMore(type){if(type==='rem')remExpanded=!remExpanded;else evExpanded=!evExpanded;renderDash()}
 
