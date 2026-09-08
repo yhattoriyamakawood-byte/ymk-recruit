@@ -1337,8 +1337,15 @@ function renderDash(){
   const yrLbl=selYears.size===0?'全年度':[...selYears].sort().join('・')+'年卒'
   const eGoal=GOAL_ENTRY?'目標'+GOAL_ENTRY+'名・残'+Math.max(0,GOAL_ENTRY-sts.length)+'名':yrLbl
   const aGoal='目標'+GOAL_ACC+'名・残'+Math.max(0,GOAL_ACC-accSts.length)+'名'
-  const yrBD=(arr)=>{if(selYears.size<=1)return'';const m={};arr.forEach(s=>{m[s.yr]=(m[s.yr]||0)+1});return'<div style="font-size:9px;color:#aaa;margin-top:2px">'+Object.entries(m).sort((a,b)=>a[0]-b[0]).map(([y,n])=>y+':'+n+'人').join(' ')+'</div>'};
-  document.getElementById('dash-stats').innerHTML='<div class="sc-card"><div class="sc-lbl">① エントリー</div><div class="sc-val">'+sts.length+'</div>'+yrBD(sts)+'<div class="sc-sub">'+eGoal+'</div></div>'+'<div class="sc-card"><div class="sc-lbl">② 内定出し</div><div class="sc-val">'+offerSts.length+'</div>'+yrBD(offerSts)+jobBD(offerSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">③ 内定承諾</div><div class="sc-val">'+accSts.length+'</div>'+yrBD(accSts)+'<div class="sc-sub">'+aGoal+'</div>'+jobBD(accSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">④ 内定辞退</div><div class="sc-val">'+decSts.length+'</div>'+yrBD(decSts)+jobBD(decSts)+'</div>'+'<div class="sc-card"><div class="sc-lbl">⑤ 承諾待ち</div><div class="sc-val">'+waitSts.length+'</div>'+yrBD(waitSts)+jobBD(waitSts)+'</div>'
+  const yrs=selYears.size>0?[...selYears].sort((a,b)=>a-b):null;
+  const mkCard=(lbl,arr,sub,bdfn)=>{
+    if(yrs&&yrs.length>1){
+      const secs=yrs.map(y=>{const ya=arr.filter(s=>s.yr===y);return'<div style="border-top:1px solid #eee;padding:4px 0 2px"><div style="font-size:10px;color:#999">'+y+'年卒</div><div class="sc-val">'+ya.length+'</div>'+(bdfn?bdfn(ya):'')+' </div>'}).join('');
+      return'<div class="sc-card"><div class="sc-lbl">'+lbl+'</div>'+secs+'</div>';
+    }
+    return'<div class="sc-card"><div class="sc-lbl">'+lbl+'</div><div class="sc-val">'+arr.length+'</div>'+(sub?'<div class="sc-sub">'+sub+'</div>':'')+(bdfn?bdfn(arr):'')+' </div>';
+  };
+  document.getElementById('dash-stats').innerHTML=mkCard('① エントリー',sts,eGoal,null)+mkCard('② 内定出し',offerSts,null,jobBD)+mkCard('③ 内定承諾',accSts,aGoal,jobBD)+mkCard('④ 内定辞退',decSts,null,jobBD)+mkCard('⑤ 承諾待ち',waitSts,null,jobBD)
   // パイプライン実績ファネル（各ステージの累積人数）
   const FUNNEL_DEF=[
     {lbl:'エントリー',    stages:['エントリー'],       color:'#bbb'},
