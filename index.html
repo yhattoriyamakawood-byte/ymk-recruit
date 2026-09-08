@@ -598,7 +598,8 @@ async function loadAllFromSupabase(){
   if(staff&&staff.length){STAFF.length=0;staff.forEach(s=>STAFF.push(s))}
   if(company_staff&&company_staff.length){COMPANY_STAFF.length=0;company_staff.forEach(s=>COMPANY_STAFF.push(s))}
   if(gcal_accounts&&gcal_accounts.length){GCAL_ACCOUNTS.length=0;gcal_accounts.forEach(a=>GCAL_ACCOUNTS.push(a))}
-}
+
+  refreshAll()}
 
 async function _authSubmit(){
   const pwd=document.getElementById('auth-pwd').value
