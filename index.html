@@ -1520,7 +1520,8 @@ function renderKB(){
     sec.cols.forEach(col=>{
       const cards=kbData[col.id]||[]
       const colEl=document.createElement('div')
-      colEl.className='kb-col'+(sec.cls==='offer'?' offer-col':sec.cls==='follow'?' follow-col':sec.cls==='exit'?' exit-col':'')
+       colEl.dataset.colId=col.id
+     colEl.className='kb-col'+(sec.cls==='offer'?' offer-col':sec.cls==='follow'?' follow-col':sec.cls==='exit'?' exit-col':'')
       colEl.style.cssText='border-radius:0 0 7px 7px;border-top:none'
       colEl.dataset.col=col.id
 
@@ -1556,9 +1557,9 @@ function renderKB(){
       })
       colEl.addEventListener('drop',ev=>{
         ev.preventDefault();colEl.classList.remove('dov')
-        if(!dragCard||col.id===dragCard.col)return
+        if(!dragCard||(ev.currentTarget.dataset.colId||col.id)===dragCard.col)return
         const stu=STUDENTS.find(x=>x.id===dragCard.id);if(!stu)return
-        const ns=KBS[col.id]
+        const ns=KBS[ev.currentTarget.dataset.colId||col.id]
         pushUndo()
         stu.stage=ns
         stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:ns,cur:true})
