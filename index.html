@@ -682,7 +682,7 @@ const KB_EXIT=[{id:'fail',lbl:'不合格'},{id:'decline',lbl:'辞退'}]
 const ALL_COLS=[...KB_MAIN,...KB_OFFER,...KB_FOLLOW,...KB_EXIT]
 const KBS={};ALL_COLS.forEach(c=>KBS[c.id]=c.lbl)
 const S2KB={};ALL_COLS.forEach(c=>S2KB[c.lbl]=c.id);S2KB['インターンシップ']='intern';S2KB['インターン']='intern'
-const SCH_OPTS=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','内定承諾面談','フォローイベント','不合格','辞退','会社説明会']
+const SCH_OPTS=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定後フォロー','内定承諾','内定辞退','内定承諾面談','フォローイベント','不合格','辞退','会社説明会']
 
 let STUDENTS=[]
 let EVENTS=[]
