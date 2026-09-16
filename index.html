@@ -7,6 +7,7 @@
 <title>新卒採用CRM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <style>
@@ -460,6 +461,7 @@ html,body{height:100%;overflow:hidden}
     </div>
 
     <div class="sc" id="sc-anal">
+      <div style="padding:8px 12px 0;text-align:right"><button onclick="exportAnalExcel()" style="padding:4px 14px;font-size:13px;background:#10b981;color:#fff;border:none;border-radius:5px;cursor:pointer">Excel出力</button></div>
       <div class="an-wrap" id="anal-wrap" style="overflow:auto"></div>
     </div>
     <div id="sc-tmpl" class="sc" style="overflow-y:auto"><div style="max-width:760px;margin:0 auto;padding:20px 20px 40px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><h2 style="font-size:14px;font-weight:700;margin:0">テンプレート管理</h2><button onclick="saveTmpl()" style="background:#4f6ef7;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600">保存</button></div><p style="font-size:11px;color:#999;margin:0 0 20px">使える変数: <code>${dateStr}</code>=日付&nbsp;&nbsp;<code>${ev.time}</code>=開始時間&nbsp;&nbsp;<code>${endTime}</code>=終了時間&nbsp;&nbsp;<code>${kaiSai}</code>=開催場所&nbsp;&nbsp;<code>${fuku}</code>=服装<br>改行はEnterキーで入力してください</p><div id="tmpl-list"></div></div></div>
@@ -2097,6 +2099,38 @@ function _analDrop(e,toIdx){
   const item=MEDIAS.splice(_analDragIdx,1)[0]
   MEDIAS.splice(toIdx,0,item)
   _analDragIdx=null;buildMediaDDs();renderAnal()
+}
+function exportAnalExcel(){
+  if(typeof XLSX==='undefined')return
+  const sts=STUDENTS.filter(s=>yrMatch(s))
+  const internIds=new Set()
+  EVENTS.filter(ev=>ev.title==='インターンシップ').forEach(ev=>ev.pax.forEach(p=>{
+    if(p.attended==='yes')internIds.add(p.stuId)
+  }))
+  const mediaMap={}
+  sts.forEach(s=>{
+    const m=s.media||'不明'
+    if(!mediaMap[m])mediaMap[m]={e:0,offer:0,accepted:0,intern:0}
+    mediaMap[m].e++
+    if(internIds.has(s.id))mediaMap[m].intern++
+    if(['内定承諾','承諾待ち','内定辞退'].includes(s.stage))mediaMap[m].offer++
+    if(s.stage==='内定承諾')mediaMap[m].accepted++
+  })
+  let gt=0,te=0,ti=0,to=0,ta=0
+  const rows=[['媒体名','エントリー','選考(インターン参加)','内定出し','内定承諾','費用合計']]
+  MEDIAS.forEach(m=>{
+    const d=mediaMap[m]||{e:0,offer:0,accepted:0,intern:0}
+    const c=(MEDIA_COSTS[m]||[]).reduce((s,x)=>s+x.amount,0)
+    gt+=c;te+=d.e;ti+=d.intern;to+=d.offer;ta+=d.accepted
+    rows.push([m,d.e,d.intern,d.offer,d.accepted,c])
+  })
+  rows.push(['合計',te,ti,to,ta,gt])
+  const wb=XLSX.utils.book_new()
+  const ws=XLSX.utils.aoa_to_sheet(rows)
+  ws['!cols']=[{wch:15},{wch:12},{wch:20},{wch:12},{wch:12},{wch:14}]
+  XLSX.utils.book_append_sheet(wb,ws,'媒体分析')
+  const yr=[...selYears].sort().join(',')
+  XLSX.writeFile(wb,'選考分析'+(yr?'_'+yr:'')+'.xlsx')
 }
 function renderAnal(){
   const sts=STUDENTS.filter(s=>yrMatch(s))
