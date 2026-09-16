@@ -1952,34 +1952,37 @@ function exportFazeExcel(){
       [...tr.querySelectorAll('th,td')].map(td=>cleanVal(td.innerText.trim()))
     )
   }
-  const tables=[...content.querySelectorAll('table')]
-  if(!tables.length)return
   const wb=XLSX.utils.book_new()
   const yr=typeof selYears!=='undefined'?[...selYears].sort().join(','):''
-  const ws1=XLSX.utils.aoa_to_sheet(tblToAoa(tables[0]))
+  const savedSel=typeof fazeMediaSel!=='undefined'?fazeMediaSel:'全体'
+  const savedTab=typeof curFazeTab!=='undefined'?curFazeTab:'phase'
+  if(typeof curFazeTab!=='undefined')curFazeTab='phase'
+  if(typeof fazeMediaSel!=='undefined')fazeMediaSel='全体'
+  if(typeof renderFaze==='function')renderFaze()
+  const mainTbl=content.querySelector('table')
+  if(!mainTbl){if(typeof fazeMediaSel!=='undefined')fazeMediaSel=savedSel;if(typeof curFazeTab!=='undefined')curFazeTab=savedTab;if(typeof renderFaze==='function')renderFaze();return}
+  const ws1=XLSX.utils.aoa_to_sheet(tblToAoa(mainTbl))
   XLSX.utils.book_append_sheet(wb,ws1,'フェーズ別')
-  if(typeof STUDENTS!=='undefined'&&typeof MEDIAS!=='undefined'&&typeof EVENTS!=='undefined'){
-    const sts=STUDENTS.filter(s=>typeof yrMatch==='function'?yrMatch(s):true)
-    const internIds=new Set()
-    EVENTS.filter(ev=>ev.title==='インターンシップ').forEach(ev=>{
-      ev.pax.forEach(p=>{if(p.attended==='yes')internIds.add(p.stuId)})
-    })
-    const offerStages=['内定承諾','承諾待ち','内定辞退']
-    const mediaRows=[['媒体名','エントリー','インターン参加','内定出し','内定承諾']]
-    let te=0,ti=0,to=0,ta=0
+  if(typeof MEDIAS!=='undefined'&&MEDIAS.length>0){
+    const mediaRows=[]
     MEDIAS.forEach(m=>{
-      const ms=sts.filter(s=>s.media===m)
-      const e=ms.length
-      const ii=ms.filter(s=>internIds.has(s.id)).length
-      const o=ms.filter(s=>offerStages.includes(s.stage)).length
-      const a=ms.filter(s=>s.stage==='内定承諾').length
-      te+=e;ti+=ii;to+=o;ta+=a
-      mediaRows.push([m,e,ii,o,a])
+      if(typeof fazeMediaSel!=='undefined')fazeMediaSel=m
+      if(typeof renderFaze==='function')renderFaze()
+      const mTbl=content.querySelector('table')
+      if(mTbl){
+        mediaRows.push([m])
+        mediaRows.push(...tblToAoa(mTbl))
+        mediaRows.push([])
+      }
     })
-    mediaRows.push(['合計',te,ti,to,ta])
-    const ws2=XLSX.utils.aoa_to_sheet(mediaRows)
-    XLSX.utils.book_append_sheet(wb,ws2,'媒体別')
+    if(mediaRows.length){
+      const ws2=XLSX.utils.aoa_to_sheet(mediaRows)
+      XLSX.utils.book_append_sheet(wb,ws2,'媒体別内訳')
+    }
   }
+  if(typeof fazeMediaSel!=='undefined')fazeMediaSel=savedSel
+  if(typeof curFazeTab!=='undefined')curFazeTab=savedTab
+  if(typeof renderFaze==='function')renderFaze()
   XLSX.writeFile(wb,'選考分析'+(yr?'_'+yr:'')+'.xlsx')
 }
 
