@@ -379,7 +379,7 @@ html,body{height:100%;overflow:hidden}
           <div class="dash-zone">
             <div class="z-hdr"><div class="z-ttl"><i class="ti ti-bell"></i>リマインダー<span style="position:relative;display:inline-block;margin-left:5px" onmouseenter="document.getElementById('rem-info').style.display='block'" onmouseleave="document.getElementById('rem-info').style.display='none'"><i class="ti ti-info-circle" style="font-size:12px;color:#bbb;cursor:pointer;vertical-align:middle"></i><div id="rem-info" style="display:none;position:absolute;left:0;top:18px;z-index:300;background:#fff;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:12px 14px;width:260px;font-size:11px;color:#555;line-height:1.8;white-space:normal"><div style="font-weight:600;color:#333;margin-bottom:6px">リマインドルール</div><div>📅 イベント7日以内 → 案内通知未送</div><div>⏰ イベント3日以内 → リマインド未送</div><div>🎯 役員面接7日前 → 中間リマインド</div><div>✅ 過去14日以内（GW/役員/最終）→ 合否通知未送</div><div>📞 日程調整中で1日以上連絡なし</div><div>📋 最終連絡から7日以上経過</div><div>🎂 誕生日当日</div></div></span></div><span style="font-size:10px;color:#999">全<span id="rem-total">0</span>件</span></div>
             <div class="z-body" id="reminder-list"></div>
-            <button class="more-btn" id="rem-more-btn" onclick="toggleMore('rem')" style="display:none"></button>
+            
           </div>
         </div>
       </div>
@@ -1257,7 +1257,6 @@ function addYearKey(e){if(e.key==='Enter')addYearFromInput()}
 function addYearFromInput(){const inp=document.getElementById('yr-add-inp');const v=parseInt(inp.value.trim());if(!v||isNaN(v))return;if(!YEARS.includes(v)){YEARS.push(v);YEARS.sort()}selYears.add(v);inp.value='';buildYrDD();refreshAll()}
 function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList();}
 function yrMatch(s){return selYears.size===0||selYears.has(s.yr)}
-function toggleMore(type){if(type==='rem')remExpanded=!remExpanded;else evExpanded=!evExpanded;renderDash()}
 
 function genReminders(){
   const reminders=[];const today=new Date()
@@ -1367,14 +1366,14 @@ function renderDash(){
   const fnMax=Math.max(...fn,1)
   document.getElementById('funnel').innerHTML=fn.map((v,i)=>{const sl=fstu[i];const hasStu=sl&&sl.length;const stuDiv=hasStu?`<div id="fn-stu-${i}" style="display:none;flex-basis:100%;padding:2px 0 4px 88px;flex-wrap:wrap;gap:3px">${sl.map(s=>`<span style="font-size:9px;background:#f5f5f5;padding:1px 4px;border-radius:3px;color:#555;white-space:nowrap">${s.ln}${s.fn}${(s.jobTags||[]).length?'('+s.jobTags.join('/')+')':''}</span>`).join('')}</div>`:'';const infoBtn=hasStu?`<button onclick="const d=document.getElementById('fn-stu-${i}');d.style.display=d.style.display==='flex'?'none':'flex'" style="border:none;background:none;cursor:pointer;color:#bbb;font-size:12px;padding:0 2px" title="学生を表示">&#9432;</button>`:'<button style="border:none;background:none;cursor:pointer;color:#bbb;font-size:12px;padding:0 2px;visibility:hidden" aria-hidden="true">&#9432;</button>';return`<div class="fn-row" style="flex-wrap:wrap;align-items:center">${infoBtn}<div class="fn-lbl" style="width:80px;font-size:10px">${fl[i]}</div><div class="fn-bar"><div class="fn-fill" style="${v===0?'display:none;':''}width:${Math.round(v/fnMax*100)}%;background:${fc[i]}">${v>0?v:''}</div></div><div class="fn-n">${v}</div>${stuDiv}</div>`}).join('')
   const rems=genReminders();_remCache=rems;document.getElementById('rem-total').textContent=rems.length
-  const showRem=remExpanded?rems:rems.slice(0,MAX_SHOW_REM)
+  const showRem=rems
   document.getElementById('reminder-list').innerHTML=showRem.map((r,ri)=>{
     const actionBtn=r.action?`<button onclick="markRemDone(${ri})" style="flex-shrink:0;height:18px;padding:0 6px;font-size:9px;border:1px solid #ccc;border-radius:3px;background:#fff;cursor:pointer;color:#555;white-space:nowrap">送済</button>`:'';
     const lcPicker=r.stuId?`<input type="date" onchange="remLcUpdate(${r.stuId},this.value)" style="height:20px;font-size:9px;padding:0 4px;border:1px solid #ddd;border-radius:3px;background:#fafafa;color:#333;cursor:pointer;flex-shrink:0" title="最終連絡日を更新">`:'';
     const whenEl=`<div style="font-size:9px;color:${r.urgent?'#a32d2d':'#999'};white-space:nowrap;margin-left:2px">${r.when}</div>`;
     return`<div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f0f0f0"><i class="ti ti-clock" style="font-size:11px;color:${r.urgent?'#a32d2d':'#ccc'};flex-shrink:0"></i><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}${r.media?'<span style="font-size:9px;background:#e8f4fd;color:#1a6fa0;border-radius:6px;padding:1px 5px;margin-left:4px">'+r.media+'</span>':''}</div><div style="font-size:10px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.text}</div>${r.sch&&r.sch.date?'<div style="font-size:9px;color:#888;margin-top:1px">次回: '+r.sch.title+' '+fmtDateW(r.sch.date)+'</div>':''}</div>${actionBtn}${lcPicker}${whenEl}${r.stuId?'<button onclick="openStuFromRem('+r.stuId+')" style="flex-shrink:0;height:18px;padding:0 6px;font-size:9px;border:1px solid #bbb;border-radius:3px;background:#f8f8f8;cursor:pointer;color:#333;white-space:nowrap">詳細</button>':''}</div>`
   }).join('')
-  const remMore=document.getElementById('rem-more-btn');if(rems.length>MAX_SHOW_REM){remMore.style.display='flex';remMore.textContent=remExpanded?'▲ 折りたたむ':`▼ もっと見る（+${rems.length-MAX_SHOW_REM}件）`}else remMore.style.display='none'
+  
 }
 
 const ALL_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','フォローイベント','不合格','辞退']
