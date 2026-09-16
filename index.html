@@ -1944,7 +1944,7 @@ function exportFazeExcel(){
   if(!content)return
   function cleanVal(v){
     v=String(v).replace(/名/g,'').replace(/%/g,'').replace(/,/g,'').trim()
-    if(v==='—'||v==='―'||v==='–'||v==='')return ''
+    if(v==='\u2014'||v==='\u2015'||v==='\u2013'||v==='')return ''
     const n=Number(v);return isNaN(n)?v:n
   }
   function tblToAoa(tbl){
@@ -1963,8 +1963,7 @@ function exportFazeExcel(){
     for(let i=1;i<tables.length;i++){
       let el=tables[i].previousElementSibling
       while(el&&!el.innerText.trim())el=el.previousElementSibling
-      const label=el?el.innerText.trim().replace(/
-.*/,'').slice(0,50):''
+      const label=el?el.innerText.trim().split('\n')[0].slice(0,50):''
       if(label)mediaRows.push([label])
       mediaRows.push(...tblToAoa(tables[i]))
       mediaRows.push([])
