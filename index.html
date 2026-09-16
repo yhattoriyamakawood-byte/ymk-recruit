@@ -1942,14 +1942,39 @@ function exportFazeExcel(){
   if(typeof XLSX==='undefined')return
   const content=document.getElementById('faze-content')
   if(!content)return
-  const table=content.querySelector('table')
-  if(!table)return
+  function cleanVal(v){
+    v=String(v).replace(/名/g,'').replace(/%/g,'').replace(/,/g,'').trim()
+    if(v==='—'||v==='―'||v==='–'||v==='')return ''
+    const n=Number(v);return isNaN(n)?v:n
+  }
+  function tblToAoa(tbl){
+    return [...tbl.querySelectorAll('tr')].map(tr=>
+      [...tr.querySelectorAll('th,td')].map(td=>cleanVal(td.innerText.trim()))
+    )
+  }
+  const tables=[...content.querySelectorAll('table')]
+  if(!tables.length)return
   const wb=XLSX.utils.book_new()
-  const ws=XLSX.utils.table_to_sheet(table)
-  XLSX.utils.book_append_sheet(wb,ws,'フェーズ別')
   const yr=typeof selYears!=='undefined'?[...selYears].sort().join(','):''
+  const ws1=XLSX.utils.aoa_to_sheet(tblToAoa(tables[0]))
+  XLSX.utils.book_append_sheet(wb,ws1,'フェーズ別')
+  if(tables.length>1){
+    const mediaRows=[]
+    for(let i=1;i<tables.length;i++){
+      let el=tables[i].previousElementSibling
+      while(el&&!el.innerText.trim())el=el.previousElementSibling
+      const label=el?el.innerText.trim().replace(/
+.*/,'').slice(0,50):''
+      if(label)mediaRows.push([label])
+      mediaRows.push(...tblToAoa(tables[i]))
+      mediaRows.push([])
+    }
+    const ws2=XLSX.utils.aoa_to_sheet(mediaRows)
+    XLSX.utils.book_append_sheet(wb,ws2,'媒体別内訳')
+  }
   XLSX.writeFile(wb,'選考分析'+(yr?'_'+yr:'')+'.xlsx')
 }
+
 function renderFaze(){
   const allSts=STUDENTS.filter(s=>yrMatch(s))
   const PIPE=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','内定出し','内定承諾']
