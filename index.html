@@ -453,7 +453,7 @@ html,body{height:100%;overflow:hidden}
       <div class="an-tabs" id="faze-tabs">
         <div class="an-tab on" onclick="fazeTab('phase',this)">フェーズ別</div>
         <div class="an-tab" onclick="fazeTab('period',this)">期間別集計</div>
-      </div>
+      <button onclick="exportFazeExcel()" style="margin-left:auto;padding:4px 14px;font-size:13px;background:#10b981;color:#fff;border:none;border-radius:5px;cursor:pointer">Excel出力</button></div>
       <div class="an-wrap">
         <div id="faze-media-bar" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px"></div>
         <div id="faze-content"></div>
@@ -1937,6 +1937,18 @@ function removeFazeMedia(m){
   pushUndo();MEDIAS.splice(idx,1)
   if(fazeMediaSel===m)fazeMediaSel='全体'
   buildMediaDDs();renderFaze()
+}
+function exportFazeExcel(){
+  if(typeof XLSX==='undefined')return
+  const content=document.getElementById('faze-content')
+  if(!content)return
+  const table=content.querySelector('table')
+  if(!table)return
+  const wb=XLSX.utils.book_new()
+  const ws=XLSX.utils.table_to_sheet(table)
+  XLSX.utils.book_append_sheet(wb,ws,'フェーズ別')
+  const yr=typeof selYears!=='undefined'?[...selYears].sort().join(','):''
+  XLSX.writeFile(wb,'選考分析'+(yr?'_'+yr:'')+'.xlsx')
 }
 function renderFaze(){
   const allSts=STUDENTS.filter(s=>yrMatch(s))
