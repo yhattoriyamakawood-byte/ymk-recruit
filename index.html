@@ -1995,7 +1995,7 @@ function exportFazeExcel(){
 
 function renderFaze(){
   const allSts=STUDENTS.filter(s=>yrMatch(s))
-  const PIPE=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','内定出し','内定承諾']
+  const PIPE=['エントリー','インターンシップ','グループワーク','役員面接','最終面接','内定出し','内定承諾']
   const PIPE_HIST={'内定出し':'承諾待ち','内定承諾':'内定承諾'} // map display label -> hist stage
   const OFFER=['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退']
   const DROP=['辞退','不合格']
@@ -2012,40 +2012,46 @@ function renderFaze(){
   function calcStats(targetSts){
     const targetIds=new Set(targetSts.map(s=>s.id))
     let prevAttended=targetSts.length
+    let offerCount=0
     return PIPE.map(phase=>{
       // エントリー・内定出し・内定承諾は予約=null、参加=パイプライン実数
       if(phase==='エントリー'){
-        return{phase,reserved:null,participated:targetSts.length,notDone:null,rate:null,reserveRate:null,targetCount:null}
+        return{phase,reserved:null,participated:targetSts.length,notDone:null,rate:null,reserveRate:null,targetCount:null,passRate:null}
       }
       if(phase==='内定出し'){
         const n=targetSts.filter(s=>['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退'].includes(s.stage)||s.hist.some(h=>h.s==='承諾待ち'||h.s==='内定後フォロー')).length
-        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null}
+        offerCount=n
+        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null,passRate:null}
       }
       if(phase==='内定承諾'){
         const n=targetSts.filter(s=>s.stage==='内定承諾'||s.stage==='承諾後フォロー').length
-        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null}
+        const passRate=offerCount>0?Math.round(n/offerCount*100):null
+        return{phase,reserved:null,participated:n,notDone:null,rate:null,reserveRate:null,targetCount:null,passRate}
       }
       // イベントpaxベース
       const evList=EVENTS.filter(ev=>ev.title===phase)
       const reservedIds=new Set()
       const attendedIds=new Set()
       const pendingIds=new Set()
+      const passedIds=new Set()
       evList.forEach(ev=>{
         ev.pax.forEach(p=>{
           if(!targetIds.has(p.stuId))return
           reservedIds.add(p.stuId)
           if(p.attended==='yes')attendedIds.add(p.stuId)
+          if(p.attended==='yes'&&p.result==='pass')passedIds.add(p.stuId)
           if(p.attended!=='yes'&&p.attended!=='no')pendingIds.add(p.stuId)
         })
       })
       const reserved=reservedIds.size
       const participated=attendedIds.size
       const notDone=pendingIds.size
+      const passRate=participated>0?Math.round(passedIds.size/participated*100):null
       const rate=reserved>0?Math.round(participated/reserved*100):0
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
       prevAttended=participated
-      return{phase,reserved,participated,notDone,rate,reserveRate,targetCount}
+      return{phase,reserved,participated,notDone,rate,reserveRate,targetCount,passRate}
     })
   }
   function tableHTML(stats,label){
@@ -2062,8 +2068,8 @@ function renderFaze(){
         ${label?`<span style="padding:2px 8px;background:#f0f0f0;border-radius:4px">${label}</span>`:''}
         <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　平均予約率 <span style="color:${rateColor(avgResRate)};font-weight:600">${avgResRate}%</span>　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
       </div>
-      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">対象</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数</th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th></tr></thead>
-      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:#999">${isEntry?'—':(r.targetCount??'—')+'名'}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td>${isEntry||rr===null?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${rr}%;background:${rateBg(rr)}"></div></div><span style="font-size:11px;color:${rateColor(rr)};font-weight:600;min-width:30px">${rr+'%'}</span></div>`}</td><td>${isEntry?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${r.rate}%;background:${rateBg(r.rate)}"></div></div><span style="font-size:11px;color:${rateColor(r.rate)};font-weight:600;min-width:30px">${r.reserved>0?r.rate+'%':'—'}</span></div>`}</td></tr>`}).join('')}</tbody></table></div>`
+      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">対象</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数</th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th><th style="text-align:right">通過率</th></tr></thead>
+      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:#999">${isEntry?'—':(r.targetCount??'—')+'名'}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td>${isEntry||rr===null?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${rr}%;background:${rateBg(rr)}"></div></div><span style="font-size:11px;color:${rateColor(rr)};font-weight:600;min-width:30px">${rr+'%'}</span></div>`}</td><td>${isEntry?'<span style="color:#bbb;font-size:11px">—</span>':`<div style="display:flex;align-items:center;gap:6px"><div class="rate-bar" style="width:60px"><div class="rate-fill" style="width:${r.rate}%;background:${rateBg(r.rate)}"></div></div><span style="font-size:11px;color:${rateColor(r.rate)};font-weight:600;min-width:30px">${r.reserved>0?r.rate+'%':'—'}</span></div>`}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
   }
   if(curFazeTab==='phase'){
     const stats=calcStats(sts)
