@@ -149,6 +149,7 @@ html,body{height:100%;overflow:hidden}
 .ph-tbl{width:100%;border-collapse:collapse;font-size:12px}
 .ph-tbl th{text-align:left;padding:7px 10px;border-bottom:1px solid var(--bd);font-size:10px;color:var(--tx2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;background:var(--bg2);white-space:nowrap}
 .ph-tbl td{padding:8px 10px;border-bottom:.5px solid var(--bd);vertical-align:middle}
+.ph-tbl th:not(:first-child),.ph-tbl td:not(:first-child){text-align:center!important}
 .ph-tbl tr:last-child td{border:none}.ph-tbl tr:hover td{background:var(--bg2)}
 .rate-wrap{display:flex;align-items:center;gap:6px}
 .rate-bar{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;min-width:40px}
@@ -2050,8 +2051,8 @@ function renderFaze(){
       const rate=reserved>0?Math.round(participated/reserved*100):0
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
-      prevAttended=participated
       const noRate=['個別面談','RC面談①','RC面談②'].includes(phase)
+      if(!noRate)prevAttended=participated
       return{phase,reserved,participated,notDone,rate:noRate?null:rate,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
     })
   }
