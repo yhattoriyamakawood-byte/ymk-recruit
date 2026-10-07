@@ -2167,7 +2167,8 @@ function exportAnalExcel(){
     const m=s.media||'不明'
     if(!mediaMap[m])mediaMap[m]={e:0,offer:0,accepted:0,intern:0}
     mediaMap[m].e++
-    if(internIds.has(s.id))mediaMa['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退'].includes(s.stage))mediaMap[m].offer++))mediaMap[m].offer++
+    if(internIds.has(s.id))mediaMap[m].intern++
+    if(['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退'].includes(s.stage))mediaMap[m].offer++
     if(s.stage==='内定承諾'||s.stage==='承諾後フォロー')mediaMap[m].accepted++
   })
   let gt=0,te=0,ti=0,to=0,ta=0
