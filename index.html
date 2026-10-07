@@ -283,7 +283,7 @@ html,body{height:100%;overflow:hidden}
     <div class="f-row">
       <label class="f-lbl">内容</label>
       <select class="f-sel" id="sch-title-sel" onchange="onSchTitleChange()">
-        <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>承諾待ち</option><option>内定後フォロー</option><option>内定承諾</option><option>承諾後フォロー</option><option>内定辞退</option><option>内定承諾面談</option><option>フォローイベント</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
+        <option>エントリー</option><option>個別面談</option><option>インターンシップ</option><option>グループワーク</option><option>RC面談①</option><option>役員面接</option><option>RC面談②</option><option>最終面接</option><option>フォローイベント</option><option>承諾待ち</option><option>内定後フォロー</option><option>内定承諾</option><option>承諾後フォロー</option><option>内定辞退</option><option>内定承諾面談</option><option>不合格</option><option>辞退</option><option>会社説明会</option><option>その他（自由入力）</option</select>
     </div>
     <div class="f-row" id="sch-custom-row"><label class="f-lbl">メモ</label><input class="f-inp" id="sch-title-custom"></div>
     <div class="f-2"><div class="f-row"><label class="f-lbl">日付</label><input class="f-inp" type="date" id="sch-date" onchange="if(this.value){const cb=document.getElementById('sch-scheduling');if(cb.checked){cb.checked=false;const t=document.getElementById('sch-time');if(!t.value)t.value='10:00'};autoFillSchTime()}"></div><div class="f-row"><label class="f-lbl">時刻</label><input class="f-inp" type="time" id="sch-time" value="10:00"></div></div>
@@ -681,10 +681,10 @@ const KB_MAIN=[{id:'entry',lbl:'エントリー'},{id:'iv',lbl:'個別面談'},{
 const KB_OFFER=[{id:'offer_wait',lbl:'承諾待ち'},{id:'offer_follow',lbl:'内定後フォロー'},{id:'offer_acc',lbl:'内定承諾'},{id:'offer_post',lbl:'承諾後フォロー'},{id:'offer_dec',lbl:'内定辞退'}]
 const KB_FOLLOW=[{id:'follow',lbl:'フォローイベント'}]
 const KB_EXIT=[{id:'fail',lbl:'不合格'},{id:'decline',lbl:'辞退'}]
-const ALL_COLS=[...KB_MAIN,...KB_OFFER,...KB_FOLLOW,...KB_EXIT]
+const ALL_COLS=[...KB_MAIN,...KB_FOLLOW,...KB_OFFER,...KB_EXIT]
 const KBS={};ALL_COLS.forEach(c=>KBS[c.id]=c.lbl)
 const S2KB={};ALL_COLS.forEach(c=>S2KB[c.lbl]=c.id);S2KB['インターンシップ']='intern';S2KB['インターン']='intern'
-const SCH_OPTS=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退','内定承諾面談','フォローイベント','不合格','辞退','会社説明会']
+const SCH_OPTS=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退','内定承諾面談','不合格','辞退','会社説明会']
 
 let STUDENTS=[]
 let EVENTS=[]
@@ -1354,12 +1354,12 @@ function renderDash(){
     {lbl:'役員面接',      stages:['役員面接'],           color:'#555'},
     {lbl:'RC面談②',      stages:['RC面談②'],           color:'#444'},
     {lbl:'最終面接',      stages:['最終面接'],           color:'#333'},
+    {lbl:'フォロー',      stages:['フォローイベント'],   color:'#e67e22'},
     {lbl:'承諾待ち',      stages:['承諾待ち'],           color:'#2e6b2e'},
     {lbl:'内定後フォロー',stages:['内定後フォロー'],color:'#357a47'},
     {lbl:'内定承諾',      stages:['内定承諾'],           color:'#27500a'},
     {lbl:'承諾後フォロー',stages:['承諾後フォロー'],color:'#1a3a07'},
     {lbl:'内定辞退',      stages:['内定辞退'],           color:'#c0392b'},
-    {lbl:'フォロー',      stages:['フォローイベント'],   color:'#e67e22'},
     {lbl:'不合格',        stages:['不合格'],             color:'#aaa'},
     {lbl:'辞退',          stages:['辞退'],               color:'#ccc'},
   ]
@@ -1380,7 +1380,7 @@ function renderDash(){
   
 }
 
-const ALL_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','フォローイベント','不合格','辞退']
+const ALL_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','承諾待ち','内定承諾','内定辞退','不合格','辞退']
 function toggleStageMenu(e){e.stopPropagation();const m=document.getElementById('stage-filter-menu');if(!m)return;const isOpen=m.style.display==='block';if(isOpen){m.style.display='none';return}renderStageChips();m.style.display='block'}
 function renderStageChips(){const c=document.getElementById('stage-chips');if(!c)return;c.innerHTML=ALL_STAGES.map(st=>`<span onclick="toggleStage('${st}')" style="cursor:pointer;padding:3px 8px;border-radius:12px;font-size:11px;border:1px solid ${sstage.has(st)?'#4a90d9':'#ddd'};background:${sstage.has(st)?'#e8f0fb':'#f9f9f9'};color:${sstage.has(st)?'#2563ab':'#555'}">${st}</span>`).join('')}
 function toggleStage(st){if(sstage.has(st)){sstage.delete(st)}else{sstage.add(st)};updateStageBtnLabel();renderStageChips();renderStu()}
@@ -2332,7 +2332,7 @@ async function impParseSheet(file){
     }
   })
   // ステージ名正規化（表記ゆれ対応）
-  const VALID_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','承諾待ち','内定承諾','内定辞退','フォローイベント','不合格','辞退']
+  const VALID_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','承諾待ち','内定承諾','内定辞退','不合格','辞退']
   const STAGE_ALIAS={'インターン':'インターンシップ','intern':'インターンシップ','GW':'グループワーク','gw':'グループワーク','rc1':'RC面談①','rc2':'RC面談②','最終':'最終面接','内定':'内定承諾','承諾':'内定承諾','辞':'辞退','落':'不合格'}
   function normStage(raw){
     if(!raw)return'エントリー'
