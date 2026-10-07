@@ -2195,7 +2195,9 @@ function renderAnal(){
   EVENTS.filter(ev=>ev.title==='インターンシップ').forEach(ev=>ev.pax.forEach(p=>{if(p.attended==='yes')internIds.add(p.stuId)}))
   sts.forEach(s=>{
     const m=s.media||'不明'
-    if(!mediaMap[m])mediaMap[m]={e:0,offer:0,accepte['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退'].includes(s.stage))mediaMap[m].offer++退'].includes(s.stage))mediaMap[m].offer++
+    if(!mediaMap[m])mediaMap[m]={e:0,offer:0,accepted:0,intern:0}
+    mediaMap[m].e++
+    if(['承諾待ち','内定後フォロー','内定承諾','承諾後フォロー','内定辞退'].includes(s.stage))mediaMap[m].offer++
     if(s.stage==='内定承諾'||s.stage==='承諾後フォロー')mediaMap[m].accepted++
     if(internIds.has(s.id))mediaMap[m].intern++
   })
