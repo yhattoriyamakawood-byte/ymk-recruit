@@ -1268,7 +1268,7 @@ function genReminders(){
     ev.pax.forEach((p,pi)=>{const stu=STUDENTS.find(s=>s.id===p.stuId);if(!stu||!yrMatch(stu))return;const name=`${stu.ln} ${stu.fn}`
       if(!p.notified&&du>=0&&du<=7)reminders.push({name,text:`${ev.title} — 案内通知未送`,when:fmtDateW(ev.date),urgent:du<=3,action:{evId:ev.id,pi,field:'notified'},stuId:stu.id,media:stu.media||'',sch:stu.sch,_pri:2})
       if(!p.reminded&&du>=0&&(du<=3||(du===4&&new Date().getDay()===5)))reminders.push({name,text:`${ev.title} — リマインド未送`,when:fmtDateW(ev.date),urgent:true,action:{evId:ev.id,pi,field:'reminded'},stuId:stu.id,media:stu.media||'',sch:stu.sch,_pri:1})
-      if(ev.title==='役員面接'&&!p.reminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'reminded'},stuId:stu.id,media:stu.media||'',sch:stu.sch,_pri:2})
+      if(ev.title==='役員面接'&&!p.weekReminded&&du>=4&&du<=7)reminders.push({name,text:`役員面接 — 中間リマインド（7日前）`,when:fmtDateW(ev.date),urgent:false,action:{evId:ev.id,pi,field:'weekReminded'},stuId:stu.id,media:stu.media||'',sch:stu.sch,_pri:2})
       if(p.result===null&&du<0&&du>=-14&&['グループワーク','役員面接','最終面接'].includes(ev.title)&&p.attended!=='no')reminders.push({name,text:`${ev.title} — 合否通知未送`,when:`${-du}日前`,urgent:Math.abs(du)>=3,action:{evId:ev.id,pi,field:'result'},_top:true,_pri:4})
     })
   })
@@ -2072,7 +2072,7 @@ function renderFaze(){
         <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　平均予約率 <span style="color:${rateColor(avgResRate)};font-weight:600">${avgResRate}%</span>　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
       </div>
       <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数</th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th><th style="text-align:right">通過率</th></tr></thead>
-      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td style="text-align:right;color:${rr!==null?rateColor(rr):'#bbb'}">${rr!==null?rr+'%':'—'}</td><td style="text-align:right;color:${r.rate!==null?rateColor(r.rate):'#bbb'}">${r.rate!==null?r.rate+'%':'—'}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
+      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td style="text-align:right;color:${rr!==null?rateColor(rr):'#bbb'}">${rr!==null?rr+'%':'—'}</td><td style="text-align:right;color:${r.rate!==null?rateColor(r.rate):'#bbb'}">${r.rate!==null?r.rate+'%'+(r.adjustedRate!==null&&r.adjustedRate!==r.rate?' ('+r.adjustedRate+'%)':''): '—'}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
   }
   if(curFazeTab==='phase'){
     const stats=calcStats(sts)
@@ -2092,20 +2092,24 @@ function renderFaze(){
     const fromD=fazeDateFrom,toD=fazeDateTo
     function inPeriod(date){if(!date)return false;if(fromD&&date<fromD)return false;if(toD&&date>toD)return false;return true}
     const rows=PIPE.map(phase=>{
-      if(phase==='エントリー'){const cnt=sts.filter(s=>inPeriod(s.entryDate)).length;return{phase,reserved:cnt,participated:cnt,rate:null}}
+      if(phase==='エントリー'){const cnt=sts.filter(s=>inPeriod(s.entryDate)).length;return{phase,reserved:cnt,participated:cnt,notDone:0,rate:null,adjustedRate:null}}
       const evTitle=PIPE_HIST[phase]||phase
       const evList=EVENTS.filter(ev=>ev.title===evTitle&&inPeriod(ev.date))
-      const reservedIds=new Set(),attendedIds=new Set()
+      const reservedIds=new Set(),attendedIds=new Set(),pendingIds=new Set()
       evList.forEach(ev=>{
         ev.pax.forEach(p=>{
           if(!sts.find(s=>s.id===p.stuId))return
           reservedIds.add(p.stuId)
           if(p.attended==='yes')attendedIds.add(p.stuId)
+          else if(p.attended!=='no')pendingIds.add(p.stuId)
         })
       })
       const reserved=reservedIds.size,participated=attendedIds.size
+      const notDone=pendingIds.size
       const rate=reserved>0?Math.round(participated/reserved*100):0
-      return{phase,reserved,participated,rate}
+      const adjDenom=reserved-notDone
+      const adjustedRate=adjDenom>0?Math.round(participated/adjDenom*100):null
+      return{phase,reserved,participated,notDone,rate,adjustedRate}
     })
     const totalRes=rows.reduce((s,r)=>s+r.reserved,0)
     const totalPar=rows.reduce((s,r)=>s+r.participated,0)
