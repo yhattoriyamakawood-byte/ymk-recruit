@@ -2056,7 +2056,7 @@ function renderFaze(){
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
       const noRate=['個別面談','RC面談①','RC面談②'].includes(phase)
       if(!noRate)prevAttended=participated
-      const participateRate=!noRate&&targetCount>0?Math.round(participated/targetCount*100):null
+      const participateRate=!noRate&&(reserved-notDone)>0?Math.round(participated/(reserved-notDone)*100):null
       return{phase,reserved,participated,notDone,rate:noRate?null:rate,participateRate,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
     })
   }
@@ -2074,7 +2074,7 @@ function renderFaze(){
         ${label?`<span style="padding:2px 8px;background:#f0f0f0;border-radius:4px">${label}</span>`:''}
         <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　平均予約率 <span style="color:${rateColor(avgResRate)};font-weight:600">${avgResRate}%</span>　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
       </div>
-      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数 <span title="自フェーズ参加数÷前フェーズ参加数" style="cursor:help;font-size:10px;color:#888">ℹ</span></th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th><th style="text-align:right">通過率</th></tr></thead>
+      <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数 <span onclick="alert('参加数の（％）は\n参加数÷(予約数−未実施数)で計算します')" style="cursor:pointer;font-size:10px;color:#1a73e8">ℹ</span></th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th><th style="text-align:right">通過率</th></tr></thead>
       <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名${r.participateRate!=null?'<br><span style="font-size:10px;color:#888">('+r.participateRate+'%)</span>':''}</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td style="text-align:right;color:${rr!==null?rateColor(rr):'#bbb'}">${rr!==null?rr+'%':'—'}</td><td style="text-align:right;color:${r.rate!==null?rateColor(r.rate):'#bbb'}">${r.rate!==null?r.rate+'%':'—'}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
   }
   if(curFazeTab==='phase'){
@@ -2271,7 +2271,7 @@ function renderAnal(){
       </td>
       <td style="text-align:center;vertical-align:top;padding-top:10px">${d.e}</td>
       <td style="text-align:center;vertical-align:top;padding-top:10px">${d.intern}${d.e>0?'<br><span style="font-size:10px;color:#888">('+Math.round(d.intern/d.e*100)+'%)</span>':''}</td>
-      <td style="text-align:center;vertical-align:top;padding-top:10px">${d.offer}${d.accepted>0?'<br><span style="font-size:10px;color:#888">('+Math.round(d.offer/d.accepted*100)+'%)</span>':''}</td>
+      <td style="text-align:center;vertical-align:top;padding-top:10px">${d.offer}${d.intern>0?'<br><span style="font-size:10px;color:#888">('+Math.round(d.offer/d.intern*100)+'%)</span>':''}</td>
       <td style="text-align:center;vertical-align:top;padding-top:10px">${d.accepted}${d.offer>0?'<br><span style="font-size:10px;color:#888">('+Math.round(d.accepted/d.offer*100)+'%)</span>':''}</td>
       <td style="vertical-align:top;min-width:260px">
         ${costRows}
