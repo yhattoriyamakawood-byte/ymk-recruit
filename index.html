@@ -2067,7 +2067,7 @@ function renderFaze(){
       return{phase,reserved,participated,notDone,rate:noRate?null:rate,participateRate,prevPhaseName:prevPN,prevCount,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
     })
   }
-  function showParticipateInfo(phase,prev,n,d){alert(phase+'参加数/'+prev+'参加数\n'+n+'名/'+d+'名')}
+  window.showParticipateInfo=function(phase,prev,n,d){alert(phase+'参加数/'+prev+'参加数\n'+n+'名/'+d+'名')}
       function tableHTML(stats,label){
     const evStats=stats.filter(r=>r.reserved!==null)
     const totalRes=evStats.reduce((s,r)=>s+r.reserved,0)
