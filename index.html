@@ -2070,7 +2070,7 @@ function renderFaze(){
       const rate=reserved>0?Math.round(participated/reserved*100):0
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
-      const noRate=['個別面談','RC面談①','RC面談②'].includes(phase)
+      const noRate=['RC面談①','RC面談②'].includes(phase)
       const noPartRate=['RC面談①','RC面談②'].includes(phase)
       const prevPN=noPartRate?null:prevPhaseName
       if(!noRate){prevAttended=participated;prevPhaseName=phase}
