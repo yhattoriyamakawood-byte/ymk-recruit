@@ -2061,7 +2061,6 @@ function renderFaze(){
           reservedIds.add(p.stuId)
           if(p.attended==='yes')attendedIds.add(p.stuId)
           if(p.attended==='no')noIds.add(p.stuId)
-          if(p.attended==='no')noIds.add(p.stuId)
           if(p.attended==='yes'&&p.result==='pass')passedIds.add(p.stuId)
           if(p.attended!=='yes'&&p.attended!=='no')pendingIds.add(p.stuId)
         })
@@ -2069,8 +2068,6 @@ function renderFaze(){
       const reserved=reservedIds.size
       const participated=attendedIds.size
       const notDone=pendingIds.size
-      const noCount=noIds.size
-      const strictRate=(participated+noCount)>0?Math.round(participated/(participated+noCount)*100):null
       const noCount=noIds.size
       const strictRate=(participated+noCount)>0?Math.round(participated/(participated+noCount)*100):null
       const passRate=participated>0?Math.round(passedIds.size/participated*100):null
