@@ -2052,6 +2052,7 @@ function renderFaze(){
       const evList=EVENTS.filter(ev=>ev.title===phase)
       const reservedIds=new Set()
       const attendedIds=new Set()
+      const noIds=new Set()
       const pendingIds=new Set()
       const passedIds=new Set()
       evList.forEach(ev=>{
@@ -2059,6 +2060,7 @@ function renderFaze(){
           if(!targetIds.has(p.stuId))return
           reservedIds.add(p.stuId)
           if(p.attended==='yes')attendedIds.add(p.stuId)
+          if(p.attended==='no')noIds.add(p.stuId)
           if(p.attended==='yes'&&p.result==='pass')passedIds.add(p.stuId)
           if(p.attended!=='yes'&&p.attended!=='no')pendingIds.add(p.stuId)
         })
@@ -2066,17 +2068,20 @@ function renderFaze(){
       const reserved=reservedIds.size
       const participated=attendedIds.size
       const notDone=pendingIds.size
+      const noCount=noIds.size
+      const strictRate=(participated+noCount)>0?Math.round(participated/(participated+noCount)*100):null
       const passRate=participated>0?Math.round(passedIds.size/participated*100):null
       const rate=reserved>0?Math.round(participated/reserved*100):0
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
       const noRate=['RC面談①','RC面談②'].includes(phase)
       const noPartRate=['RC面談①','RC面談②'].includes(phase)
-      const prevPN=noPartRate?null:prevPhaseName
+      const prevPN=noPartRate?null:(phase==="インターンシップ"?"エントリー":prevPhaseName)
       if(!noRate){prevAttended=participated;prevPhaseName=phase}
-      const participateRate=!noPartRate&&targetCount>0?Math.round(participated/targetCount*100):null
-      const prevCount=noPartRate?null:targetCount
-      return{phase,reserved,participated,notDone,rate:noRate?null:rate,participateRate,prevPhaseName:prevPN,prevCount,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
+      const effectivePrevCount=phase==="インターンシップ"?targetSts.length:targetCount
+      const participateRate=!noPartRate&&effectivePrevCount>0?Math.round(participated/effectivePrevCount*100):null
+      const prevCount=noPartRate?null:(phase==="インターンシップ"?targetSts.length:targetCount)
+      return{phase,reserved,participated,notDone,noCount,rate:noRate?null:rate,strictRate:noRate?null:strictRate,participateRate,prevPhaseName:prevPN,prevCount,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
     })
   }
   
@@ -2095,7 +2100,7 @@ function renderFaze(){
         <span style="color:#999;font-weight:400">累計予約 ${totalRes}名　平均予約率 <span style="color:${rateColor(avgResRate)};font-weight:600">${avgResRate}%</span>　参加 ${totalPar}名　平均参加率 <span style="color:${rateColor(avgRate)};font-weight:600">${avgRate}%</span>　未実施 ${totalNotDone}名</span>
       </div>
       <table class="ph-tbl"><thead><tr><th>フェーズ</th><th style="text-align:right">予約数</th><th style="text-align:right">参加数</th><th style="text-align:right">未実施</th><th>予約率</th><th>参加率</th><th style="text-align:right">通過率</th></tr></thead>
-      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名${r.participateRate!=null?'<br><span style="font-size:10px;color:#888">('+r.participateRate+'%) <span style="position:relative;display:inline-block"><span onmouseenter="this.nextElementSibling.style.display=\'block\'" onmouseleave="this.nextElementSibling.style.display=\'none\'" style="cursor:pointer;color:#1a73e8;font-size:9px">ℹ</span><div style="display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:999;pointer-events:none">'+r.phase+'参加数/'+r.prevPhaseName+'参加数<br>'+r.participated+'名/'+r.prevCount+'名</div></span>':''}</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td style="text-align:right;color:${rr!==null?rateColor(rr):'#bbb'}">${rr!==null?rr+'%':'—'}</td><td style="text-align:right;color:${r.rate!==null?rateColor(r.rate):'#bbb'}">${r.rate!==null?r.rate+'%':'—'}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
+      <tbody>${stats.map(r=>{const isEntry=r.reserved===null;const rr=isEntry?null:r.reserveRate;return`<tr${!isEntry&&r.reserved===0?' style="opacity:0.4"':''}><td style="font-weight:600">${r.phase}</td><td style="text-align:right;color:${isEntry?'#bbb':''}">${isEntry?'—':r.reserved+'名'}</td><td style="text-align:right;font-weight:${isEntry?'600':'400'}">${r.participated}名${r.participateRate!=null?'<br><span style="font-size:10px;color:#888">('+r.participateRate+'%) <span style="position:relative;display:inline-block"><span onmouseenter="this.nextElementSibling.style.display=\'block\'" onmouseleave="this.nextElementSibling.style.display=\'none\'" style="cursor:pointer;color:#1a73e8;font-size:9px">ℹ</span><div style="display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:4px 8px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:999;pointer-events:none">'+r.phase+'参加数/'+r.prevPhaseName+'参加数<br>'+r.participated+'名/'+r.prevCount+'名</div></span>':''}</td><td style="text-align:right;color:${r.notDone>0?'#b76e00':'#ccc'};font-weight:${r.notDone>0?'600':'400'}">${isEntry?'—':r.reserved>0?r.notDone+'名':'—'}</td><td style="text-align:right;color:${rr!==null?rateColor(rr):'#bbb'}">${rr!==null?rr+'%':'—'}</td><td style="text-align:right;color:${r.rate!==null?rateColor(r.rate):'#bbb'}">${r.rate!==null?r.rate+'%':'—'}${r.strictRate!==null?'<br><span style="color:#777;font-size:11px">('+r.strictRate+'% <span style="cursor:help" title="参加数÷（参加数＋不参加数）で算出">ⓘ</span>)</span>':''}</td><td style="text-align:right;color:${r.passRate!==null?rateColor(r.passRate):'#bbb'}">${r.passRate!==null?r.passRate+'%':'—'}</td></tr>`}).join('')}</tbody></table></div>`
   }
   if(curFazeTab==='phase'){
     const stats=calcStats(sts)
