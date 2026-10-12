@@ -2072,7 +2072,7 @@ function renderFaze(){
       const strictRate=(participated+noCount)>0?Math.round(participated/(participated+noCount)*100):null
       const passRate=participated>0?Math.round(passedIds.size/participated*100):null
       const rate=reserved>0?Math.round(participated/reserved*100):0
-      const targetCount=prevAttended
+      const targetCount=phase==="インターンシップ"?targetSts.length:prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
       const noRate=['RC面談①','RC面談②'].includes(phase)
       const noPartRate=['RC面談①','RC面談②'].includes(phase)
