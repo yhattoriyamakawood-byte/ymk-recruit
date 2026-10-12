@@ -2059,11 +2059,11 @@ function renderFaze(){
       const targetCount=prevAttended
       const reserveRate=targetCount>0?Math.round(reserved/targetCount*100):0
       const noRate=['個別面談','RC面談①','RC面談②'].includes(phase)
-      if(!noRate){prevAttended=participated;prevPhaseName=phase}
       const noPartRate=['RC面談①','RC面談②'].includes(phase)
+      const prevPN=noPartRate?null:prevPhaseName
+      if(!noRate){prevAttended=participated;prevPhaseName=phase}
       const participateRate=!noPartRate&&targetCount>0?Math.round(participated/targetCount*100):null
       const prevCount=noPartRate?null:targetCount
-      const prevPN=noPartRate?null:prevPhaseName
       return{phase,reserved,participated,notDone,rate:noRate?null:rate,participateRate,prevPhaseName:prevPN,prevCount,reserveRate:noRate?null:reserveRate,targetCount,passRate:noRate?null:passRate}
     })
   }
