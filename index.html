@@ -1145,6 +1145,7 @@ function saveSchedule(){
   const title=selVal==='その他（自由入力）'?document.getElementById('sch-title-custom').value:selVal
   const isSchFlag=document.getElementById('sch-scheduling').checked
   const date=isSchFlag?null:document.getElementById('sch-date').value;const time=isSchFlag?null:document.getElementById('sch-time').value;const locDetail=document.getElementById('sch-loc-detail').value
+  if(!isSchFlag&&!date){toast('日付を入力してください');return}
   const _prevEvId=s.sch?.evId||null
   s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff(),note:SCH_OPTS.includes(selVal)?(document.getElementById('sch-title-custom')?.value?.trim()||''):''};s.scheduling=isSchFlag;if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
   // Move student to matching stage if title matches a pipeline column label
