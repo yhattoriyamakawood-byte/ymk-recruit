@@ -2351,6 +2351,7 @@ function renderAnal(){
   }).join('')
   const totalAccepted=Object.values(mediaMap).reduce((s,d)=>s+d.accepted,0)
   const totalIntern=Object.values(mediaMap).reduce((s,d)=>s+d.intern,0)
+        const totalEntries=Object.values(mediaMap).reduce((s,d)=>s+d.e,0)
   const wrap=document.getElementById('anal-wrap')
   if(!wrap)return
   wrap.innerHTML=`
@@ -2365,9 +2366,7 @@ function renderAnal(){
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#999;margin-bottom:14px">媒体別実績・費用 — ${yrLabel}</div>
     <div class="an-stats" style="margin-bottom:16px;grid-template-columns:repeat(4,1fr)">
       <div class="an-sc"><div class="an-sc-lbl">総費用</div><div class="an-sc-val" style="font-size:18px">${grandTotal>0?grandTotal.toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;color:#999">円</span>':'—'}</div></div>
-      <div class="an-sc"><div class="an-sc-lbl">インターン参加</div><div class="an-sc-val">${totalIntern}<span style="font-size:12px;font-weight:400;color:#999">名</span></div></div>
-      <div class="an-sc"><div class="an-sc-lbl">内定承諾者数</div><div class="an-sc-val">${totalAccepted}<span style="font-size:12px;font-weight:400;color:#999">名</span></div></div>
-      <div class="an-sc"><div class="an-sc-lbl">承諾単価（平均）</div><div class="an-sc-val" style="color:#0c447c;font-size:18px">${totalAccepted>0&&grandTotal>0?Math.round(grandTotal/totalAccepted).toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;color:#999">円</span>':'—'}</div></div>
+      <div class="an-sc"><div class="an-sc-lbl">エントリー単価（平均）</div><div class="an-sc-val" style="color:#0c447c">${totalEntries>0&&grandTotal>0?Math.round(grandTotal/totalEntries).toLocaleString('ja-JP')+'<span style="font-size:12px">円</span>':'&#x2014;'}</div></div><div class="an-sc"><div class="an-sc-lbl">接触単価（平均）</div><div class="an-sc-val" style="color:#0c447c">${totalIntern>0&&grandTotal>0?Math.round(grandTotal/totalIntern).toLocaleString('ja-JP')+'<span style="font-size:12px">円</span>':'&#x2014;'}</div></div><div class="an-sc"><div class="an-sc-lbl">承諾単価（平均）</div><div class="an-sc-val" style="color:#0c447c;font-size:18px">${totalAccepted>0&&grandTotal>0?Math.round(grandTotal/totalAccepted).toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;color:#999">円</span>':'—'}</div></div>
     </div>
     <table class="ph-tbl" style="table-layout:auto">
       <thead><tr><th>媒体名</th><th style="text-align:center">エントリー</th><th style="text-align:center">接触<br><span style="font-weight:400;font-size:10px">(インターン参加)</span></th><th style="text-align:center">内定出し</th><th style="text-align:center">内定承諾</th><th>費用内訳</th><th style="text-align:right">合計費用</th><th style="text-align:right">接触単価</th><th style="text-align:right">承諾単価</th></tr></thead>
