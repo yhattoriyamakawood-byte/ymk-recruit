@@ -854,7 +854,7 @@ function openGcalEvent(evId,e){
   const loc=ev.loc==='WEB'?'WEB':(ev.locDetail||ev.loc||'')
   const staff=ev.staff||[]
   const staffLabel=staff.length?'（'+staff.join('・')+'）':''
-  const gcalTitle=ev.title+staffLabel
+  const gcalTitle=(['RC面談①','RC面談②'].includes(ev.title)?'リクルーター面談':ev.title)+staffLabel
   // Build description: student participants with name, grad year, job tags
   const stuLines=ev.pax.map(p=>{
     const s=STUDENTS.find(x=>x.id===p.stuId)
