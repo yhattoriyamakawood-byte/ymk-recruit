@@ -2308,6 +2308,7 @@ function renderAnal(){
     const total=costs.reduce((s,c)=>s+calcCostAmount(c,d),0)
     grandTotal+=total
     const acceptCost=d.accepted>0&&total>0?Math.round(total/d.accepted):null
+    const entryCost=d.e>0&&total>0?Math.round(total/d.e):null
     const internCost=d.intern>0&&total>0?Math.round(total/d.intern):null
     const costRows=costs.map((cost,idx)=>{
   const type=cost.pricingType||'fixed'
@@ -2345,6 +2346,7 @@ function renderAnal(){
         ${_renderInvoice(media)}
       </td>
       <td style="text-align:right;vertical-align:top;padding-top:10px;font-weight:${total>0?'600':'400'};color:${total>0?'#111':'#bbb'}">${total>0?fmt(total):'—'}</td>
+      <td style="text-align:right;vertical-align:top;padding-top:10px;font-weight:${entryCost?'600':'400'};color:${entryCost?'#c47000':'#bbb'}">${entryCost?fmt(entryCost):'&#x2014;'}</td>
       <td style="text-align:right;vertical-align:top;padding-top:10px;font-weight:${internCost?'600':'400'};color:${internCost?'#c47000':'#bbb'}">${internCost?fmt(internCost):'—'}</td>
       <td style="text-align:right;vertical-align:top;padding-top:10px;font-weight:${acceptCost?'600':'400'};color:${acceptCost?'#0c447c':'#bbb'}">${acceptCost?fmt(acceptCost):'—'}</td>
     </tr>`
@@ -2369,7 +2371,7 @@ function renderAnal(){
       <div class="an-sc"><div class="an-sc-lbl">エントリー単価（平均）</div><div class="an-sc-val" style="color:#0c447c">${totalEntries>0&&grandTotal>0?Math.round(grandTotal/totalEntries).toLocaleString('ja-JP')+'<span style="font-size:12px">円</span>':'&#x2014;'}</div></div><div class="an-sc"><div class="an-sc-lbl">接触単価（平均）</div><div class="an-sc-val" style="color:#0c447c">${totalIntern>0&&grandTotal>0?Math.round(grandTotal/totalIntern).toLocaleString('ja-JP')+'<span style="font-size:12px">円</span>':'&#x2014;'}</div></div><div class="an-sc"><div class="an-sc-lbl">承諾単価（平均）</div><div class="an-sc-val" style="color:#0c447c;font-size:18px">${totalAccepted>0&&grandTotal>0?Math.round(grandTotal/totalAccepted).toLocaleString('ja-JP')+'<span style="font-size:12px;font-weight:400;color:#999">円</span>':'—'}</div></div>
     </div>
     <table class="ph-tbl" style="table-layout:auto">
-      <thead><tr><th>媒体名</th><th style="text-align:center">エントリー</th><th style="text-align:center">接触<br><span style="font-weight:400;font-size:10px">(インターン参加)</span></th><th style="text-align:center">内定出し</th><th style="text-align:center">内定承諾</th><th>費用内訳</th><th style="text-align:right">合計費用</th><th style="text-align:right">接触単価</th><th style="text-align:right">承諾単価</th></tr></thead>
+      <thead><tr><th>媒体名</th><th style="text-align:center">エントリー</th><th style="text-align:center">接触<br><span style="font-weight:400;font-size:10px">(インターン参加)</span></th><th style="text-align:center">内定出し</th><th style="text-align:center">内定承諾</th><th>費用内訳</th><th style="text-align:right">合計費用</th><th style="text-align:right">エントリー単価</th><th style="text-align:right">接触単価</th><th style="text-align:right">承諾単価</th></tr></thead>
       <tbody>${mediaRows}</tbody>
     </table>`
 }
