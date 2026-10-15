@@ -1475,7 +1475,7 @@ function renderKB(){
       if(!a.sch?.date&&!b.sch?.date)return 0
       if(!a.sch?.date)return 1
       if(!b.sch?.date)return -1
-      return new Date(a.sch.date)-new Date(b.sch.date)
+      return new Date(a.sch.date+'T'+(a.sch.time||'00:00'))-new Date(b.sch.date+'T'+(b.sch.time||'00:00'))
     })
   })
 
