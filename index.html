@@ -1100,13 +1100,19 @@ function autoFillSchTime(){
   const sel=document.getElementById('sch-title-sel').value
   const title=sel==='その他（自由入力）'?document.getElementById('sch-title-custom').value.trim():sel
   if(!date||!title)return
+  const FOLLOW_TYPES=['フォローイベント','内定後フォロー','承諾後フォロー']
+  const isFollow=FOLLOW_TYPES.includes(title)
   const locDetail=(document.getElementById('sch-loc-detail').value||'').trim()
-  // 会場名が入力済みならそれも条件に、未入力なら最初のマッチを使用
-  const ev=EVENTS.find(e=>e.date===date&&e.title===title&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>e.date===date&&e.title===title)
+  // 会場名が入力済みならそれも条件に、未入力なら最初マッチを使用
+  const ev=isFollow
+    ?(EVENTS.find(e=>FOLLOW_TYPES.includes(e.title)&&e.date===date&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>FOLLOW_TYPES.includes(e.title)&&e.date===date))
+    :(EVENTS.find(e=>e.date===date&&e.title===title&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>e.date===date&&e.title===title))
   if(ev){
     if(ev.time)document.getElementById('sch-time').value=ev.time
     if(!locDetail&&ev.locDetail)document.getElementById('sch-loc-detail').value=ev.locDetail
     if(ev.loc){schLocType=ev.loc;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))}
+    if(ev.note){const customInp=document.getElementById('sch-title-custom');if(customInp&&!customInp.value){customInp.value=ev.note}}
+    if(ev.staff&&ev.staff.length>0){const currentStaff=_getSchStaff();if(currentStaff.length===0)buildSchStaffToggles(ev.staff)}
   }
 }
 function openScheduleModal(stuId,e){
