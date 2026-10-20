@@ -566,8 +566,9 @@ async function saveAllToSupabase(){
       _sbSet('staff',STAFF),
       _sbSet('company_staff',COMPANY_STAFF),
       _sbSet('gcal_accounts',GCAL_ACCOUNTS)
-    ])
-    _setSaveInd('✓ 保存済み','#22c55e')
+syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
+        STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});if(_dirtyStu.size>0)scheduleSave()
+                renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()_setSaveInd('✓ 保存済み','#22c55e')
   }catch(e){
     _setSaveInd('⚠ 保存失敗','#e74c3c')
     console.error('Supabase save error:',e)
@@ -1161,12 +1162,12 @@ function saveSchedule(){
     if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch&&!_keepSch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
     else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,note:_schNote,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch&&!_keepSch)s.sch.evId=_nev.id}
   }
-  _saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)
+  const _sNext=getStudentNextEv(s.id);if(_sNext&&(!isSchFlag)&&s.sch?.date&&new Date(_sNext.date+'T'+(_sNext.time||'00:00'))<new Date(s.sch.date+'T'+(s.sch.time||'00:00'))){s.sch={title:_sNext.title,date:_sNext.date,time:_sNext.time,loc:_sNext.loc||(s.sch?.loc||''),locDetail:_sNext.locDetail||'',evId:_sNext.id,staff:s.sch.staff||[],note:s.sch.note||''}};_saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)
 }
 function clearSchedule(){pushUndo();const s=STUDENTS.find(x=>x.id===schStuId);if(!s)return;s.sch=null;s.scheduling=false;closeModal('ov-schedule');syncPipelineEvents();toast('日程をクリアしました');const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)}
 
 function go(scr,el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById('sc-'+scr).classList.add('on');document.getElementById('hdr-t').textContent={dash:'ダッシュボード',pipe:'選考ステップ',stud:'学生名簿',evnt:'イベント一覧',faze:'選考分析',anal:'媒体分析'}[scr];if(scr==='stud')renderStu();if(scr==='pipe')renderKB();if(scr==='dash')renderDash();if(scr==='anal')renderAnal();if(scr==='evnt')renderEvList();if(scr==='faze')renderFaze()}
-function syncPipelineEvents(){
+function getStudentNextEv(stuId){const _n=new Date();return EVENTS.filter(e=>e.pax.some(p=>p.stuId===stuId)&&new Date(e.date+'T'+(e.time||'00:00'))>=_n).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0]||null}function syncPipelineEvents(){
   const PIPE_STAGES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
   // イベントは削除しない — スケジュールデータから不足分だけ追加する
   STUDENTS.forEach(s=>{
@@ -1542,12 +1543,12 @@ function renderKB(){
 
       const cardsEl=document.createElement('div');cardsEl.className='kb-cards'
       cards.forEach(s=>{
-        const hasSch=s.sch?.date;const days=hasSch?dUntil(s.sch.date):null;const soon=hasSch&&days<=3&&days>=0
+        const _kbEv=getStudentNextEv(s.id);const _kbDate=_kbEv?_kbEv.date:s.sch?.date;const _kbTime=_kbEv?_kbEv.time:s.sch?.time;const hasSch=!!_kbDate;const days=hasSch?dUntil(_kbDate):null;const soon=hasSch&&days<=3&&days>=0
         const card=document.createElement('div')
         card.className=`kc${s.scheduling?' scheduling':''}${selPipeId===s.id?' selected':''}`
         card.style.position='relative'
         card.draggable=true;card.dataset.id=s.id;card.dataset.col=col.id;let _drag=false;card.addEventListener('mousedown',()=>{_drag=false});card.addEventListener('mousemove',()=>{_drag=true});card.onclick=ev=>{if(!_drag&&!ev.defaultPrevented)selPipeStu(s.id)}
-        card.innerHTML=`<button onclick="declineStu(${s.id},event)" title="辞退" style="position:absolute;top:5px;right:5px;width:16px;height:16px;border:none;background:none;cursor:pointer;color:#bbb;display:flex;align-items:center;justify-content:center;padding:0;border-radius:3px;font-size:12px;line-height:1" onmouseover="this.style.color='#e74c3c';this.style.background='#fde8e8'" onmouseout="this.style.color='#bbb';this.style.background='none'"><i class="ti ti-x"></i></button>${s.scheduling?`<div class="sched-badge"><i class="ti ti-calendar-clock" style="font-size:9px"></i>日程調整中</div>`:''}<div style="font-size:12px;font-weight:500;margin-bottom:1px;padding-right:16px">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999;margin-bottom:2px">${s.uni}</div><div style="display:flex;gap:3px;align-items:center;flex-wrap:nowrap;overflow:hidden"><span class="yr-badge" style="flex-shrink:0">${String(s.yr).slice(-2)}卒</span><span class="${mediaCls(s.media)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.media}</span></div><div class="kc-date"><span class="kc-date-val ${hasSch?(soon?'soon':'set'):''}">${hasSch?fmtDateW(s.sch.date)+' '+s.sch.time:'未設定'}</span><button class="sch-btn ${hasSch?'set':''}" onclick="event.stopPropagation();openScheduleModal(${s.id})"><i class="ti ti-calendar-plus" style="font-size:9px"></i>${hasSch?'変更':'設定'}</button></div>`
+        card.innerHTML=`<button onclick="declineStu(${s.id},event)" title="辞退" style="position:absolute;top:5px;right:5px;width:16px;height:16px;border:none;background:none;cursor:pointer;color:#bbb;display:flex;align-items:center;justify-content:center;padding:0;border-radius:3px;font-size:12px;line-height:1" onmouseover="this.style.color='#e74c3c';this.style.background='#fde8e8'" onmouseout="this.style.color='#bbb';this.style.background='none'"><i class="ti ti-x"></i></button>${s.scheduling?`<div class="sched-badge"><i class="ti ti-calendar-clock" style="font-size:9px"></i>日程調整中</div>`:''}<div style="font-size:12px;font-weight:500;margin-bottom:1px;padding-right:16px">${s.ln} ${s.fn}</div><div style="font-size:10px;color:#999;margin-bottom:2px">${s.uni}</div><div style="display:flex;gap:3px;align-items:center;flex-wrap:nowrap;overflow:hidden"><span class="yr-badge" style="flex-shrink:0">${String(s.yr).slice(-2)}卒</span><span class="${mediaCls(s.media)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.media}</span></div><div class="kc-date"><span class="kc-date-val ${hasSch?(soon?'soon':'set'):''}">${hasSch?fmtDateW(_kbDate)+' '+_kbTime:'未設定'}</span><button class="sch-btn ${hasSch?'set':''}" onclick="event.stopPropagation();openScheduleModal(${s.id})"><i class="ti ti-calendar-plus" style="font-size:9px"></i>${hasSch?'変更':'設定'}</button></div>`
         card.addEventListener('dragstart',ev=>{
           dragCard={id:s.id,col:col.id}
           ev.dataTransfer.effectAllowed='move'
