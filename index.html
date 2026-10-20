@@ -1147,7 +1147,8 @@ function saveSchedule(){
   const date=isSchFlag?null:document.getElementById('sch-date').value;const time=isSchFlag?null:document.getElementById('sch-time').value;const locDetail=document.getElementById('sch-loc-detail').value
   if(!isSchFlag&&!date){toast('日付を入力してください');return}
   const _prevEvId=s.sch?.evId||null
-  s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff(),note:SCH_OPTS.includes(selVal)?(document.getElementById('sch-title-custom')?.value?.trim()||''):''};s.scheduling=isSchFlag;if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
+  const _keepSch=!isSchFlag&&_prevEvId&&(()=>{const _ke=EVENTS.find(e=>e.id===_prevEvId);return _ke&&new Date(_ke.date+'T'+(_ke.time||'00:00'))>=new Date()})();
+  if(!_keepSch){s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff(),note:SCH_OPTS.includes(selVal)?(document.getElementById('sch-title-custom')?.value?.trim()||''):''};s.scheduling=isSchFlag};if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
   // Move student to matching stage if title matches a pipeline column label
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
@@ -1157,8 +1158,8 @@ function saveSchedule(){
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=(_prevEvId?EVENTS.find(ev=>ev.id===_prevEvId&&ev.date===date&&ev.time===time):null)||EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
     const _schNote=document.getElementById('sch-title-custom')?.value||'';
-    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
-    else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,note:_schNote,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch)s.sch.evId=_nev.id}
+    if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch&&!_keepSch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
+    else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,note:_schNote,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch&&!_keepSch)s.sch.evId=_nev.id}
   }
   _saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)
 }
@@ -1623,6 +1624,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
+  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}else{_stu.sch=null;_stu.scheduling=false}}}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
