@@ -7,7 +7,7 @@
 <title>新卒採用CRM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.h18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <style>
@@ -1602,7 +1602,7 @@ function removePaxStu(evId,stuId,e){
   ev.pax=ev.pax.filter(p=>p.stuId!==stuId)
   _dirtyEvents.add(evId)
   const stu=STUDENTS.find(s=>s.id===stuId)
-  if(stu&&stu.sch){stu.sch=null;stu._updatedAt=Date.now();_saveSingleStudent(stuId)}
+  if(stu&&stu.sch&&stu.sch.evId===evId){stu.sch=null;stu._updatedAt=Date.now();_saveSingleStudent(stuId)}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}
   toast('イベントから削除しました')
 }
