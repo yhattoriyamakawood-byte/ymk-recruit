@@ -7,7 +7,7 @@
 <title>新卒採用CRM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.h18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsxh/0.h18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <style>
@@ -566,9 +566,10 @@ async function saveAllToSupabase(){
       _sbSet('staff',STAFF),
       _sbSet('company_staff',COMPANY_STAFF),
       _sbSet('gcal_accounts',GCAL_ACCOUNTS)
-syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
-        STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});if(_dirtyStu.size>0)scheduleSave()
-                renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()_setSaveInd('✓ 保存済み','#22c55e')
+    ])
+    syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
+    renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()
+    _setSaveInd('✓ 保存済み','#22c55e')
   }catch(e){
     _setSaveInd('⚠ 保存失敗','#e74c3c')
     console.error('Supabase save error:',e)
@@ -630,6 +631,7 @@ async function _authSubmit(){
       initSession()
       document.getElementById('ov-auth').style.display='none'
       syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
+      STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});if(_dirtyStu.size>0)scheduleSave()
       renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()
       _setSaveInd('接続済み','#22c55e')
     }else{
