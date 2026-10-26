@@ -624,7 +624,8 @@ async function _authSubmit(){
     if(!r.ok||!data.access_token){throw new Error(data.error_description||'認証失敗')}
     _sbToken=data.access_token
     _sbAuthed=true
-    await _initApp()
+    document.getElementById('ov-auth').style.display='none'
+    await _loadAll()
   }catch(e){
     const el=document.getElementById('auth-err')
     if(el){el.textContent='パスワードが違います';el.style.display='block'}
