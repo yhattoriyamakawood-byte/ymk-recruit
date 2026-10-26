@@ -624,8 +624,13 @@ async function _authSubmit(){
     if(!r.ok||!data.access_token){throw new Error(data.error_description||'認証失敗')}
     _sbToken=data.access_token
     _sbAuthed=true
-    document.getElementById('ov-auth').style.display='none'
+    const _ovAuth=document.getElementById('ov-auth')
+    const _authFrm=document.getElementById('auth-form')
+    const _ldMsg=document.getElementById('auth-loading-msg')
+    if(_authFrm)_authFrm.style.display='none'
+    if(_ldMsg){_ldMsg.textContent='読み込み中…';_ldMsg.style.display='flex'}
     await loadAllFromSupabase()
+    if(_ovAuth)_ovAuth.style.display='none'
   }catch(e){
     const el=document.getElementById('auth-err')
     if(el){el.textContent='パスワードが違います';el.style.display='block'}
