@@ -477,6 +477,7 @@ const _SB_URL='https://jrnwifkfqjpocczldyxv.supabase.co'
 const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpybndpZmtmcWpwb2NjemxkeXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMzIzMzgsImV4cCI6MjA5OTgwODMzOH0.h2rEy4RwT_q0Ofzy1ck1texIPDllqSy_396acfdIQUk'
 let _sbAuthed=false
 let _sbToken=null
+let _sbRefreshToken=null
 let _saveTimer=null
 
 async function _sbGet(key){
@@ -490,20 +491,34 @@ async function _sbGet(key){
   }finally{clearTimeout(t)}
 }
 
+async function _sbRefreshAuth(){
+  if(!_sbRefreshToken)return false
+  try{
+    const r=await fetch(_SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json','apikey':_SB_KEY},body:JSON.stringify({refresh_token:_sbRefreshToken})})
+    const d=await r.json()
+    if(!r.ok||!d.access_token)return false
+    _sbToken=d.access_token
+    _sbRefreshToken=d.refresh_token||_sbRefreshToken
+    return true
+  }catch(e){return false}
+}
 async function _sbSet(key,value){
   const ctrl=new AbortController()
   const t=setTimeout(()=>ctrl.abort(),8000)
   try{
-    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{
-      method:'POST',
-      headers:Object.assign({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},_sbToken?{Authorization:'Bearer '+_sbToken}:{}),
-      body:JSON.stringify({key,value,updated_at:new Date().toISOString()}),
-      signal:ctrl.signal
-    })
+    const hdrs=()=>Object.assign({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},_sbToken?{Authorization:'Bearer '+_sbToken}:{})
+    const body=JSON.stringify({key,value,updated_at:new Date().toISOString()})
+    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{method:'POST',headers:hdrs(),body,signal:ctrl.signal})
+    if(r.status===401){
+      const ok=await _sbRefreshAuth()
+      if(!ok)throw new Error('HTTP 401')
+      const r2=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{method:'POST',headers:hdrs(),body})
+      if(!r2.ok)throw new Error('HTTP '+r2.status)
+      return
+    }
     if(!r.ok)throw new Error('HTTP '+r.status)
   }finally{clearTimeout(t)}
 }
-
 async function _hashPwd(pwd){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd))
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')
@@ -625,6 +640,7 @@ async function _authSubmit(){
     const data=await r.json()
     if(!r.ok||!data.access_token){throw new Error(data.error_description||'認証失敗')}
     _sbToken=data.access_token
+    _sbRefreshToken=data.refresh_token||null
     _sbAuthed=true
     const _ovAuth=document.getElementById('ov-auth')
     const _authFrm=document.getElementById('auth-form')
