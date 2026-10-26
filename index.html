@@ -625,7 +625,7 @@ async function _authSubmit(){
     _sbToken=data.access_token
     _sbAuthed=true
     document.getElementById('ov-auth').style.display='none'
-    await _loadAll()
+    await loadAllFromSupabase()
   }catch(e){
     const el=document.getElementById('auth-err')
     if(el){el.textContent='パスワードが違います';el.style.display='block'}
