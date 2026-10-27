@@ -1679,16 +1679,15 @@ function declineStu(id,e){
 }
 function _gwUrlPop(fn,evId,e){
   if(e)e.stopPropagation()
-  const ov=document.createElement('div')
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center'
-  const bx=document.createElement('div')
-  bx.style.cssText='background:#fff;border-radius:12px;padding:20px 24px;max-width:300px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.3)'
-  bx.innerHTML='<p style="font-size:15px;font-weight:700;color:#7c3aed;margin:0 0 8px">⚠️ URL確認</p><p style="font-size:12px;color:#555;margin:0 0 16px">テンプレート内のURL（受検メールURLなど）を確認してからコピーしてください。</p><div style="display:flex;gap:8px;justify-content:center"><button id="gwpop-ok" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:13px;cursor:pointer">コピーする</button><button id="gwpop-no" style="background:#eee;color:#444;border:none;border-radius:6px;padding:8px 18px;font-size:13px;cursor:pointer">キャンセル</button></div>'
-  ov.appendChild(bx)
-  document.body.appendChild(ov)
-  document.getElementById('gwpop-ok').onclick=()=>{ov.remove();window[fn](evId,null)}
-  document.getElementById('gwpop-no').onclick=()=>ov.remove()
-  ov.onclick=ev2=>{if(ev2.target===ov)ov.remove()}
+  window[fn](evId,null)
+  const ev=EVENTS.find(x=>x.id===evId)
+  if(!ev||!ev.note)return
+  const n=document.createElement('div')
+  n.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #7c3aed;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;color:#7c3aed;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;white-space:nowrap;cursor:pointer'
+  n.textContent='⚠️ URL確認'
+  n.onclick=()=>n.remove()
+  document.body.appendChild(n)
+  setTimeout(()=>{if(n.parentNode)n.remove()},4000)
 }
 function copyGwMail(evId,e){
   if(e)e.stopPropagation()
