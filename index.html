@@ -1171,10 +1171,10 @@ function saveSchedule(){
   const _keepSch=!isSchFlag&&_prevEvId&&(()=>{const _ke=EVENTS.find(e=>e.id===_prevEvId);if(!_ke)return false;const _ed=new Date(_ke.date+'T'+(_ke.time||'00:00'));const _nd=new Date(date+'T'+(time||'00:00'));return _ed>=new Date()&&_ed<=_nd})();
   if(!_keepSch){s.sch=isSchFlag?null:{title,date,time,loc:schLocType,locDetail,evId:null,staff:_getSchStaff(),note:SCH_OPTS.includes(selVal)?(document.getElementById('sch-title-custom')?.value?.trim()||''):''};s.scheduling=isSchFlag};if(!isSchFlag&&date&&title){const _matchEv=EVENTS.find(ev=>ev.date===date&&ev.title===title&&ev.pax.some(p=>p.stuId===s.id));if(_matchEv){if(s.sch.staff&&s.sch.staff.length>0)_matchEv.staff=s.sch.staff;_dirtyEvents.add(_matchEv.id)}}
   // Move student to matching stage if title matches a pipeline column label
-  const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','辞退':'辞退','不合格':'不合格'}
+  const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
   const newStageVal=mappedStage||(SCH_STAGE_MAP[title])
-  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
+  if(newStageVal&&newStageVal!=='フォローイベント'&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=(_prevEvId?EVENTS.find(ev=>ev.id===_prevEvId&&ev.date===date&&ev.time===time):null)||EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
