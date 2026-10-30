@@ -7,7 +7,7 @@
 <title>新卒採用CRM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsxh/0.h1h8.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsxh/0.h18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <style>
@@ -1493,11 +1493,10 @@ function renderKB(){
   /* Sort each column: 日程調整中 → top, then date ascending, undated → bottom */
   ALL_COLS.forEach(c=>{
     kbData[c.id].sort((a,b)=>{
-      if(a.scheduling&&!b.scheduling)return -1
-      if(!a.scheduling&&b.scheduling)return 1
-      if(!a.sch?.date&&!b.sch?.date)return 0
-      if(!a.sch?.date)return 1
-      if(!b.sch?.date)return -1
+      const rank=s=>s.scheduling&&!s.sch?.date?0:!s.sch?.date?1:2
+      const rA=rank(a),rB=rank(b)
+      if(rA!==rB)return rA-rB
+      if(!a.sch?.date||!b.sch?.date)return 0
       return new Date(a.sch.date+'T'+(a.sch.time||'00:00'))-new Date(b.sch.date+'T'+(b.sch.time||'00:00'))
     })
   })
