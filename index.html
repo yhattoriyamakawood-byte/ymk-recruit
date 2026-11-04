@@ -1604,6 +1604,7 @@ function renderKB(){
         if(PIPE_EV.includes(ns)){stu.scheduling=true;stu.sch=null}
         pushUndo()
         refreshAll()
+        _saveSingleStudent(stu.id)
         toast(`${stu.ln} ${stu.fn} → 「${ns}」`)
       })
 
