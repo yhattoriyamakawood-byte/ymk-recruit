@@ -484,7 +484,7 @@ async function _sbGet(key){
   const ctrl=new AbortController()
   const t=setTimeout(()=>ctrl.abort(),8000)
   try{
-    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY+'&key=eq.'+encodeURIComponent(key)+'&select=value',{headers:_sbToken?{Authorization:'Bearer '+_sbToken}:{},signal:ctrl.signal})
+    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY+'&key=eq.'+encodeURIComponent(key)+'&select=value&order=updated_at.desc&limit=1',{headers:_sbToken?{Authorization:'Bearer '+_sbToken}:{},signal:ctrl.signal})
     if(!r.ok)throw new Error('HTTP '+r.status)
     const d=await r.json()
     return d[0]?.value??null
@@ -567,7 +567,7 @@ async function _saveSingleStudent(stuId){
     _setSaveInd('保存中…','#f59e0b')
     await _sbSet('students',all)
     _setSaveInd('保存済み','#22c55e')
-  }catch(e){console.error('save student error',e)}
+  }catch(e){console.error('save student error',e);_setSaveInd('⚠ 保存失敗','#e74c3c');toast('⚠ 保存エラー: '+e.message)}
 }
 async function _mergeAndSaveStudents(){if(!_sbAuthed)return;try{const dbAll=await _sbGet('students')||[];const dbMap={};dbAll.forEach(s=>{dbMap[s.id]=s});STUDENTS.forEach(s=>{const db=dbMap[s.id];if(!db||(s._updatedAt||0)>=(db._updatedAt||0))dbMap[s.id]=s});await _sbSet('students',Object.values(dbMap))}catch(e){console.error(e)}}
 async function saveAllToSupabase(){
