@@ -1645,7 +1645,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
-  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}}
+  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
