@@ -1188,7 +1188,35 @@ function getStudentNextEv(stuId){const _n=new Date();return EVENTS.filter(e=>e.p
     }
   })
   EVENTS.sort((a,b)=>new Date(b.date)-new Date(a.date))
-
+  dedupEvents()
+}
+function dedupEvents(){
+  // 同じtitle+dateで参加者が重複しているイベントをマージする
+  let changed=false
+  const keyMap={}
+  EVENTS.forEach(ev=>{const k=ev.title+'|'+ev.date;if(!keyMap[k])keyMap[k]=[];keyMap[k].push(ev)})
+  Object.values(keyMap).forEach(evs=>{
+    if(evs.length<2)return
+    for(let i=0;i<evs.length;i++){
+      for(let j=i+1;j<evs.length;j++){
+        const a=evs[i],b=evs[j]
+        const shared=b.pax.filter(p=>a.pax.some(ap=>ap.stuId===p.stuId))
+        if(shared.length===0)continue
+        // bをaにマージ: 案内/リマインドはtrueが勝つ
+        b.pax.forEach(bp=>{
+          const ap=a.pax.find(p=>p.stuId===bp.stuId)
+          if(ap){ap.notified=ap.notified||bp.notified;ap.reminded=ap.reminded||bp.reminded;if(bp.attended&&!ap.attended)ap.attended=bp.attended;if(bp.result&&!ap.result)ap.result=bp.result}
+          else a.pax.push(bp)
+        })
+        _dirtyEvents.add(a.id);_deletedEventIds.add(b.id)
+        evs.splice(j,1);j--;changed=true
+      }
+    }
+  })
+  if(changed){
+    for(let i=EVENTS.length-1;i>=0;i--){if(_deletedEventIds.has(EVENTS[i].id))EVENTS.splice(i,1)}
+    scheduleSave()
+  }
 }function buildMediaDDs(){
   const opts=MEDIAS.map(m=>`<option value="${m}">${m}</option>`).join('')
   const fm=document.getElementById('f-media');if(fm){const prev=fm.value;fm.innerHTML=opts;if(MEDIAS.includes(prev))fm.value=prev}
