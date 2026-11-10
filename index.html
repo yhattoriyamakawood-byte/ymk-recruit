@@ -1295,7 +1295,7 @@ function toggleYrDD(e){e.stopPropagation();const dd=document.getElementById('yr-
 document.addEventListener('click',()=>{const dd=document.getElementById('yr-dd');if(dd)dd.style.display='none'})
 function addYearKey(e){if(e.key==='Enter')addYearFromInput()}
 function addYearFromInput(){const inp=document.getElementById('yr-add-inp');const v=parseInt(inp.value.trim());if(!v||isNaN(v))return;if(!YEARS.includes(v)){YEARS.push(v);YEARS.sort()}selYears.add(v);inp.value='';buildYrDD();refreshAll()}
-function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList();}
+function refreshAll(){const a=getCur();if(a==='dash')renderDash();if(a==='pipe')renderKB();if(a==='stud')renderStu();if(a==='anal')renderAnal();if(a==='faze')renderFaze();if(a==='evnt')renderEvList();updateEvTabBadge()}
 function yrMatch(s){return selYears.size===0||selYears.has(s.yr)}
 
 function genReminders(){
@@ -1647,6 +1647,7 @@ function togglePaxStatus(evId,pi,field,val,e){
     if(stu&&!['辞退','不合格','内定辞退'].includes(stu.stage)){
       stu.stage='辞退';stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:'辞退',cur:true});stu.sch=null;stu.scheduling=false
       toast(`${stu.ln} ${stu.fn} → 辞退`)
+      stu._updatedAt=Date.now();_saveSingleStudent(stu.id)
     }
   }
   if(field==='result'&&ev.pax[pi].result==='fail'){
@@ -1654,6 +1655,7 @@ function togglePaxStatus(evId,pi,field,val,e){
     if(stu&&!['辞退','不合格','内定辞退'].includes(stu.stage)){
       stu.stage='不合格';stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:'不合格',cur:true});stu.sch=null;stu.scheduling=false
       toast(`${stu.ln} ${stu.fn} → 不合格`)
+      stu._updatedAt=Date.now();_saveSingleStudent(stu.id)
     }
   }
   if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}
