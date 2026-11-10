@@ -7,7 +7,7 @@
 <title>新卒採用CRM</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsxh/0.h18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.h18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <style>
@@ -251,6 +251,7 @@ html,body{height:100%;overflow:hidden}
         <div style="display:flex;gap:6px">
           <button class="src-btn on" onclick="impSetSrc('offerbox',this)">OfferBox（PDF）</button>
           <button class="src-btn" onclick="impSetSrc('mynavi',this)">マイナビ（CSV）</button>
+          <button class="src-btn" onclick="impSetSrc('spona',this)">スポナビ（CSV）</button>
           <button class="src-btn" onclick="impSetSrc('careerticket',this)">キャリチケ（PDF）</button>
           <button class="src-btn" onclick="impSetSrc('sheet',this)">スプレッドシート（Excel/CSV）</button>
         </div>
@@ -476,49 +477,33 @@ html,body{height:100%;overflow:hidden}
 const _SB_URL='https://jrnwifkfqjpocczldyxv.supabase.co'
 const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpybndpZmtmcWpwb2NjemxkeXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMzIzMzgsImV4cCI6MjA5OTgwODMzOH0.h2rEy4RwT_q0Ofzy1ck1texIPDllqSy_396acfdIQUk'
 let _sbAuthed=false
-let _sbToken=null
-let _sbRefreshToken=null
 let _saveTimer=null
 
 async function _sbGet(key){
   const ctrl=new AbortController()
   const t=setTimeout(()=>ctrl.abort(),8000)
   try{
-    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY+'&key=eq.'+encodeURIComponent(key)+'&select=value&order=updated_at.desc&limit=1',{headers:_sbToken?{Authorization:'Bearer '+_sbToken}:{},signal:ctrl.signal})
+    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY+'&key=eq.'+encodeURIComponent(key)+'&select=value',{signal:ctrl.signal})
     if(!r.ok)throw new Error('HTTP '+r.status)
     const d=await r.json()
     return d[0]?.value??null
   }finally{clearTimeout(t)}
 }
 
-async function _sbRefreshAuth(){
-  if(!_sbRefreshToken)return false
-  try{
-    const r=await fetch(_SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json','apikey':_SB_KEY},body:JSON.stringify({refresh_token:_sbRefreshToken})})
-    const d=await r.json()
-    if(!r.ok||!d.access_token)return false
-    _sbToken=d.access_token
-    _sbRefreshToken=d.refresh_token||_sbRefreshToken
-    return true
-  }catch(e){return false}
-}
 async function _sbSet(key,value){
   const ctrl=new AbortController()
   const t=setTimeout(()=>ctrl.abort(),8000)
   try{
-    const hdrs=()=>Object.assign({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},_sbToken?{Authorization:'Bearer '+_sbToken}:{})
-    const body=JSON.stringify({key,value,updated_at:new Date().toISOString()})
-    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{method:'POST',headers:hdrs(),body,signal:ctrl.signal})
-    if(r.status===401){
-      const ok=await _sbRefreshAuth()
-      if(!ok)throw new Error('HTTP 401')
-      const r2=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{method:'POST',headers:hdrs(),body})
-      if(!r2.ok)throw new Error('HTTP '+r2.status)
-      return
-    }
+    const r=await fetch(_SB_URL+'/rest/v1/crm_data?apikey='+_SB_KEY,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key,value,updated_at:new Date().toISOString()}),
+      signal:ctrl.signal
+    })
     if(!r.ok)throw new Error('HTTP '+r.status)
   }finally{clearTimeout(t)}
 }
+
 async function _hashPwd(pwd){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd))
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')
@@ -567,7 +552,7 @@ async function _saveSingleStudent(stuId){
     _setSaveInd('保存中…','#f59e0b')
     await _sbSet('students',all)
     _setSaveInd('保存済み','#22c55e')
-  }catch(e){console.error('save student error',e);_setSaveInd('⚠ 保存失敗','#e74c3c');toast('⚠ 保存エラー: '+e.message)}
+  }catch(e){console.error('save student error',e)}
 }
 async function _mergeAndSaveStudents(){if(!_sbAuthed)return;try{const dbAll=await _sbGet('students')||[];const dbMap={};dbAll.forEach(s=>{dbMap[s.id]=s});STUDENTS.forEach(s=>{const db=dbMap[s.id];if(!db||(s._updatedAt||0)>=(db._updatedAt||0))dbMap[s.id]=s});await _sbSet('students',Object.values(dbMap))}catch(e){console.error(e)}}
 async function saveAllToSupabase(){
@@ -620,9 +605,7 @@ async function loadAllFromSupabase(){
   if(company_staff&&company_staff.length){COMPANY_STAFF.length=0;company_staff.forEach(s=>COMPANY_STAFF.push(s))}
   if(gcal_accounts&&gcal_accounts.length){GCAL_ACCOUNTS.length=0;gcal_accounts.forEach(a=>GCAL_ACCOUNTS.push(a))}
 
-  refreshAll()
-  updateEvTabBadge()
-}
+  refreshAll()}
 
 async function _authSubmit(){
   const pwd=document.getElementById('auth-pwd').value
@@ -630,32 +613,38 @@ async function _authSubmit(){
   const errEl=document.getElementById('auth-err')
   if(errEl)errEl.style.display='none'
   const btn=document.getElementById('auth-submit-btn')
-  if(btn){btn.disabled=true;btn.textContent='磺認中…'}
+  if(btn){btn.disabled=true;btn.textContent='確認中…'}
   try{
-    const r=await fetch(_SB_URL+'/auth/v1/token?grant_type=password',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':_SB_KEY},
-      body:JSON.stringify({email:'yhattori@yamakawood.co.jp',password:pwd})
-    })
-    const data=await r.json()
-    if(!r.ok||!data.access_token){throw new Error(data.error_description||'認証失敗')}
-    _sbToken=data.access_token
-    _sbRefreshToken=data.refresh_token||null
-    _sbAuthed=true
-    const _ovAuth=document.getElementById('ov-auth')
-    const _authFrm=document.getElementById('auth-form')
-    const _ldMsg=document.getElementById('auth-loading-msg')
-    if(_authFrm)_authFrm.style.display='none'
-    if(_ldMsg){_ldMsg.textContent='読み込み中…';_ldMsg.style.display='flex'}
-    await loadAllFromSupabase()
-    if(_ovAuth)_ovAuth.style.display='none'
+    const hash=await _hashPwd(pwd)
+    let storedHash=await _sbGet('password_hash')
+    if(!storedHash){
+      await _sbSet('password_hash',hash)
+      storedHash=hash
+    }
+    if(hash===storedHash){
+      _sbAuthed=true
+      const loadMsg=document.getElementById('auth-loading-msg')
+      const authForm=document.getElementById('auth-form')
+      if(loadMsg){loadMsg.style.display='flex'}
+      if(authForm)authForm.style.display='none'
+      await loadAllFromSupabase()
+      await loadTmpl()
+      initSession()
+      document.getElementById('ov-auth').style.display='none'
+      syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
+      STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});if(_dirtyStu.size>0)scheduleSave()
+      renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()
+      _setSaveInd('接続済み','#22c55e')
+    }else{
+      if(errEl){errEl.textContent='パスワードが違います';errEl.style.display='block'}
+      if(btn){btn.disabled=false;btn.textContent='ログイン'}
+    }
   }catch(e){
-    const el=document.getElementById('auth-err')
-    if(el){el.textContent='パスワードが違います';el.style.display='block'}
-  }finally{
+    if(errEl){errEl.textContent='接続エラー: '+e.message;errEl.style.display='block'}
     if(btn){btn.disabled=false;btn.textContent='ログイン'}
   }
 }
+
 async function _initApp(){
   const ovAuth=document.getElementById('ov-auth')
   if(!ovAuth){console.error('ov-auth not found');return}
@@ -940,11 +929,11 @@ function copyExecRemind(evId){
   const timeStr=String(sh).padStart(2,'0')+':'+String(sm).padStart(2,'0')+'～'+String(eh).padStart(2,'0')+':'+String(em).padStart(2,'0')
   const zUrl='https://us06web.zoom.us/j/7301966288'+'?'+'pwd=YnpVZU9oa3lkL2d6V0FzNXQrVSszdz09'
   const text=`ヤマカ木材の服部です！
-この前送った動画は見てもらえたかな？
+　この前送った動画は見てもらえたかな？
 
 選考前に見た方がいいと思うので、ぜひ参考にしてください！
 
-ご予約の日程が近づいてきましたので、再度案内をお送りします。
+　ご予約の日程が近づいてきましたので、再度案内をお送りします。
 
 【内容】役員面接
 【日程】${dateStr}
@@ -1112,19 +1101,13 @@ function autoFillSchTime(){
   const sel=document.getElementById('sch-title-sel').value
   const title=sel==='その他（自由入力）'?document.getElementById('sch-title-custom').value.trim():sel
   if(!date||!title)return
-  const FOLLOW_TYPES=['フォローイベント','内定後フォロー','承諾後フォロー']
-  const isFollow=FOLLOW_TYPES.includes(title)
   const locDetail=(document.getElementById('sch-loc-detail').value||'').trim()
-  // 会場名が入力済みならそれも条件に、未入力なら最初マッチを使用
-  const ev=isFollow
-    ?(EVENTS.find(e=>FOLLOW_TYPES.includes(e.title)&&e.date===date&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>FOLLOW_TYPES.includes(e.title)&&e.date===date))
-    :(EVENTS.find(e=>e.date===date&&e.title===title&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>e.date===date&&e.title===title))
+  // 会場名が入力済みならそれも条件に、未入力なら最初のマッチを使用
+  const ev=EVENTS.find(e=>e.date===date&&e.title===title&&(e.locDetail||'').trim()===locDetail)||EVENTS.find(e=>e.date===date&&e.title===title)
   if(ev){
     if(ev.time)document.getElementById('sch-time').value=ev.time
     if(!locDetail&&ev.locDetail)document.getElementById('sch-loc-detail').value=ev.locDetail
     if(ev.loc){schLocType=ev.loc;document.querySelectorAll('#sch-loc-toggle .loc-opt').forEach(x=>x.classList.toggle('on',x.textContent===schLocType))}
-    if(ev.note){const customInp=document.getElementById('sch-title-custom');if(customInp&&!customInp.value){customInp.value=ev.note}}
-    if(ev.staff&&ev.staff.length>0){const currentStaff=_getSchStaff();if(currentStaff.length===0)buildSchStaffToggles(ev.staff)}
   }
 }
 function openScheduleModal(stuId,e){
@@ -1174,7 +1157,7 @@ function saveSchedule(){
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
   const newStageVal=mappedStage||(SCH_STAGE_MAP[title])
-  if(newStageVal&&newStageVal!=='フォローイベント'&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
+  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=(_prevEvId?EVENTS.find(ev=>ev.id===_prevEvId&&ev.date===date&&ev.time===time):null)||EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
@@ -1429,7 +1412,7 @@ function selStu(id,refresh){
   <div class="dp-sec"><div class="dp-st orange">志望職種</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.jobTags||[]).map(t=>`<span class="tag-p" style="background:#e6f1fb;color:#0c447c;border-color:#b5d4f4">${t}</span>`).join('')||'<span style="font-size:11px;color:#ccc">未設定</span>'}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><textarea onblur="dpMemoUpdate(${s.id},this.value)" style="width:100%;box-sizing:border-box;font-size:12px;padding:5px 7px;border:1px solid #ddd;border-radius:4px;resize:vertical;background:#fafafa;min-height:60px;font-family:inherit">${s.memo||''}</textarea></div>
   <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{
-    const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px)return[];return[{d:(ev.date||'').slice(5,10).replace('-','/')||'—',s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',note:ev.note||'',ev:true,scheduled:px.attended!=='yes',ds:ev.date||'',ts:ev.time||''}]}).sort((a,b)=>(a.ds+a.ts)<(b.ds+b.ts)?-1:1);
+    const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px)return[];return[{d:(ev.date||'').slice(5,10).replace('-','/')||'—',s:ev.title,staff:ev.staff||[],loc:ev.locDetail||'',note:ev.note||'',ev:true,scheduled:px.attended!=='yes',ds:ev.date||''}]}).sort((a,b)=>a.ds<b.ds?-1:1);
     const firstEntry=(s.hist||[]).find(h=>h.s==='エントリー');const entryHist=firstEntry?[firstEntry]:[];
     const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:${h.scheduled?'#f39c12':'#4a90d9'}"><div class="tl-d">${h.d}<div class="tl-s" style="color:${h.scheduled?'#d35400':'#1a5fa8'}">${h.s}${h.scheduled?'<span style="font-size:9px;background:#f39c12;color:#fff;border-radius:3px;padding:1px 4px;margin-left:4px">予定</span>':''}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div></div>`)];
     return all.length?all.join(''):'<div style="font-size:11px;color:#aaa">履歴なし</div>'
@@ -1493,10 +1476,11 @@ function renderKB(){
   /* Sort each column: 日程調整中 → top, then date ascending, undated → bottom */
   ALL_COLS.forEach(c=>{
     kbData[c.id].sort((a,b)=>{
-      const rank=s=>s.scheduling&&!s.sch?.date?0:!s.sch?.date?1:2
-      const rA=rank(a),rB=rank(b)
-      if(rA!==rB)return rA-rB
-      if(!a.sch?.date||!b.sch?.date)return 0
+      if(a.scheduling&&!b.scheduling)return -1
+      if(!a.scheduling&&b.scheduling)return 1
+      if(!a.sch?.date&&!b.sch?.date)return 0
+      if(!a.sch?.date)return 1
+      if(!b.sch?.date)return -1
       return new Date(a.sch.date+'T'+(a.sch.time||'00:00'))-new Date(b.sch.date+'T'+(b.sch.time||'00:00'))
     })
   })
@@ -1604,7 +1588,6 @@ function renderKB(){
         if(PIPE_EV.includes(ns)){stu.scheduling=true;stu.sch=null}
         pushUndo()
         refreshAll()
-        _saveSingleStudent(stu.id)
         toast(`${stu.ln} ${stu.fn} → 「${ns}」`)
       })
 
@@ -1645,7 +1628,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
-  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}
+  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}else{_stu.sch=null;_stu.scheduling=false}}}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
@@ -1664,7 +1647,6 @@ function deleteEvent(evId,e){
   syncPipelineEvents();refreshAll()
   toast('イベントを削除しました')
 }
-function deleteFollowGroup(ids,e){if(e)e.stopPropagation();if(!confirm('このイベント（複数ステージ共通）を削除しますか？'))return;pushUndo();ids.forEach(id=>{const ev=EVENTS.find(x=>x.id===id);if(!ev)return;if(ev._synced)ev.pax.forEach(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);if(s){s.sch=null;s.scheduling=false}});const idx=EVENTS.findIndex(x=>x.id===id);if(idx!==-1){EVENTS.splice(idx,1);_deletedEventIds.add(id)}});if(ids.includes(selEvId))selEvId=null;syncPipelineEvents();refreshAll();toast('イベントを削除しました')}
 function declineStu(id,e){
   if(e)e.stopPropagation()
   const s=STUDENTS.find(x=>x.id===id);if(!s)return
@@ -1676,18 +1658,6 @@ function declineStu(id,e){
   if(selPipeId===id){selPipeId=null;document.getElementById('pipe-dp').classList.add('hide')}
   refreshAll()
   toast(`${s.ln} ${s.fn} → 「辞退」`)
-}
-function _gwUrlPop(fn,evId,e){
-  if(e)e.stopPropagation()
-  window[fn](evId,null)
-  const ev=EVENTS.find(x=>x.id===evId)
-  if(!ev||!ev.note)return
-  const n=document.createElement('div')
-  n.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid #7c3aed;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:700;color:#7c3aed;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:9999;white-space:nowrap;cursor:pointer'
-  n.textContent='⚠️ URL確認'
-  n.onclick=()=>n.remove()
-  document.body.appendChild(n)
-  setTimeout(()=>{if(n.parentNode)n.remove()},4000)
 }
 function copyGwMail(evId,e){
   if(e)e.stopPropagation()
@@ -1849,10 +1819,7 @@ function copyFollowMail(evId,e){
   const endH=_h+1
   const endTime=`${String(endH).padStart(2,'0')}:${String(_m||0).padStart(2,'0')}`
   const noteDisplay=(ev.note||'').replace(/RC面談/g,'リクルーター面談')
-  const isTaimen=ev.locDetail&&!/^https?:\/\//.test(ev.locDetail)
-  const kaiSai=isTaimen?'':'zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019'
-  const fuku=isTaimen?'スーツ':'私服で大丈夫です'
-  let text=_renderTmpl(_TMPL.followMail||_TMPL_DEFAULTS.followMail,{ev,dateStr,endTime,month,day,weekday,noteDisplay,kaiSai,fuku})
+  let text=_renderTmpl(_TMPL.followMail||_TMPL_DEFAULTS.followMail,{ev,dateStr,endTime,month,day,weekday,noteDisplay})
   const _ZU='https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09'
   if(ev.locDetail&&/^https?:\/\//.test(ev.locDetail)&&text.includes(_ZU)){const _ZD=String.fromCharCode(122,111,111,109,12391);const _zd=text.indexOf(_ZD);let _le=text.indexOf('\n',text.indexOf(_ZU));_le=text.indexOf('\n',_le+1);_le=text.indexOf('\n',_le+1);text=text.slice(0,_zd)+ev.locDetail+text.slice(_le)}
   navigator.clipboard.writeText(text).then(()=>{toast('📋 フォロー案内をコピーしました')}).catch(()=>{
@@ -1893,16 +1860,16 @@ const _TMPL_KEYS=[
   {key:'followRemind',label:'フォローイベントリマインド'},
 ]
 const _TMPL_DEFAULTS={
-  internMail:"WEB面談ありがとうございました！ \n 当社へのご興味やご理解を深めていただけたようで、大変うれしく思っています。 \n\n それではお伝えしましたように、インターンシップの案内をお送りします。 \n ご確認よろしくお願いいたします。 \n\n 【内容】営業スキルインターンシップ \n【日程】${dateStr}　 \n【時間】${ev.time}～${endTime}\n【開催】zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019\n【服装】私服で大丈夫です\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \n\n 以上となります。 \n それでは再度お会いできるのを楽しみにしております。 \n\n 今後ともよろしくお願いいたします！",
-  internRemind:"ご予約の日程が近づいてきましたので、再度案内をお送りします。 \n ご確認よろしくお願いいたします。 \n\n 【内容】営業スキルインターンシップ \n【日程】${dateStr}　 \n【時間】${ev.time}～${endTime}\n【開催】zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019\n【服装】私服で大丈夫です\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \n\n こちらのイベントへのご参加は、変わらず大丈夫そうでしょうか？",
+  internMail:"WEB面談ありがとうございました！ \n 当社へのご興味やご理解を深めていただけたようで、大変うれしく思っています。 \n\n それではお伝えしましたように、インターンシップの案内をお送りします。 \n ご確認よろしくお願いいたします。 \n\n 【内容】営業スキルインターンシップ \n【日程】${dateStr}　 \n【時間】${ev.time}～${endTime}\n【開催】${kaiSai}\n【服装】${fuku}\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \n\n 以上となります。 \n それでは再度お会いできるのを楽しみにしております。 \n\n 今後ともよろしくお願いいたします！",
+  internRemind:"ご予約の日程が近づいてきましたので、再度案内をお送りします。 \n ご確認よろしくお願いいたします。 \n\n 【内容】営業スキルインターンシップ \n【日程】${dateStr}　 \n【時間】${ev.time}～${endTime}\n【開催】${kaiSai}\n【服装】${fuku}\n【持ち物】筆記用具、メモ帳　※履歴書等は不要です \n\n こちらのイベントへのご参加は、変わらず大丈夫そうでしょうか？",
   gwMail:"先ほどはありがとうございました。 \nご予約いただいた次回イベントの案内連絡です！\n\n  【内容】グループワーク \n【日程】${dateStr}　\n 【時間】${ev.time}～${endTime}\n※5分前には集合をお願いします。 \n【開催】${kaiSai}\n【服装】スーツ ※履歴書・エントリーシートなどは不要です。 \n －－－－－－－－－－－－－－－\n ◣重要◥ \n適性検査をお送りするので、本日より『3日間』のうちにご回答ください。 \n\n 受検URL：\thttps://tracs.jp \n受検ID： \n受験パスワード： \n －－－－－－－－－－－－－－－ \n 以上となります。 \nそれでは今後とも、よろしくお願いします！",
   gwRemind:"ご予約の日程が近づいてきたので、再度詳細をお送りします。 \n 適性検査が終わっていなければすぐにそちらのご対応もお願いいたします。 \n\n 【内容】グループワーク \n【日程】${dateStr}　\n 【時間】${ev.time}～${endTime}\n※5分前には集合をお願いします。\n【開催】${kaiSai}\n【服装】スーツ \n【持ち物】筆記用具、メモ帳　 ※履歴書・エントリーシートなどは不要です。 \n\n －－－－－－－－－－－－－－－\n ◣重要◥ \nワークの前提知識として必要なので、会社紹介を復習しておいてください！ \n 視聴確認のため簡単な確認テストもお願いします。\n\n  《復習動画URL》 https://youtu.be/WUxKWY2JytI \n\n 《確認テスト 10問》 https://forms.gle/qBizid5nWzYGBtuS6 \n－－－－－－－－－－－－－－－ \n\n グループワークについてですが、変わらず参加で大丈夫そうでしょうか？",
   rc1Remind:"ヤマカ木材の服部です！\n\n面談の日程が近づいてきましたので、再度案内をお送りします。\n ご確認よろしくお願いいたします。 \n\n 【イベント名】リクルータ面談 \n【日程】${dateStr} \n【時間】${ev.time}～${endTime}\n【内容】選考企業の整理、次回選考の準備 \n【開催】zoomで行います。5分ほど前にご入室ください。\n https://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09 \nミーティングID: 919 195 3466 \nパスコード: 325019 \n【服装】私服で大丈夫です \n【持ち物】筆記用具、メモ帳 \n\n【準備】 \n⑴ キャリアビジョンシートのアップロード\n（面談の3日前までにアップロードをお願いします）\n\n  ⑵ 下記の回答準備\n  ①強み、弱み　②志望動機　③就活の軸　④学生時代力を入れたこと　⑤5年後、10年後のキャリアビジョン　⑥失敗経験＋学び　⑦モチベーションの源泉 \n\n こちら変わらず参加は大丈夫でしょうか？",
   finalInterviewMail:"お世話になっております。\n ヤマカ木材採用担当の服部です。 \n\n 最終選考の日程が決まりましたので、案内をお送りします。 \nご確認よろしくお願いいたします。\n\n  【イベント名】最終面接 \n【日程】${dateStr}　 \n【時間】${ev.time}～${endTime} \n※10分前には集合をお願いします。 \n【開催】ヤマカ木材 本社 （岐阜市城東通2丁目44ー2） \n白い２階建ての建物 \n【服装】スーツ\n【宿題】キャリアビジョンシート（最新の状態に更新し、前回同様ファイル登録情報からアップロードをお願いします）\n 【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート \n\n また、最終選考は社長に逆質問できる貴重な機会でもありますので、何かお聞きしたいことを事前にいくつか考えておいて頂ければと思います。\n\n  以上となります。 \nそれでは最後の選考も頑張ってください！ \n\n よろしくお願いいたします。 \n\n －－－－－－－－－－－－－－－\n ◣重要◥\n今回は中途スタッフのインタビュー動画です！ \n他社経験者から見たヤマカ木材の特徴が知れるので、ぜひご覧下さい！\n\n  《中途インタビュー》\n https://www.youtube.com/watch?v=ay3420yELFw \n －－－－－－－－－－－－－－－",
-  finalInterviewRemind:"お世話になっております。\nヤマカ木材の服部です。\n\n最終選考が近づいてきましたので、再度案内をお送りします。\n\n【イベント名】最終選考\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n※10分前には集合をお願いします。\n【開催】ヤマカ木材 本社\n（岐阜市城東通2丁目44ー2）\n白い２階建ての建物\n【服装】スーツ\n【内容】社長面接\n【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください）\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート\n\nまた以前もお伝えしましたように、面接には逆質問の時間がございます。\nあらかじめ2、3個考えておいてください。\n\n－－－－－－－－－－－－－－－\n◣重要◥\n今回は《社長チャンネル》です！\n\n当社では、社長が自ら想いの共有や社員交流する場として、社内向けYouTubeを発信しています。\n\n社長の人柄や人勢戦略で意識していることなど知って頂けますので、ぜひ選考前にご覧ください！\n\n▼動画はこちら\nhttps://www.youtube.com/watch?v=AXA9LVnTLXM\n－－－－－－－－－－－－－－－\n\n当日は何で来るかな？\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！",
+  finalInterviewRemind:"お世話になっております。\nヤマカ木材の服部です。\n\n最終選考が近づいてきましたので、再度案内をお送りします。\n\n【イベント名】最終選考\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n※10分前には集合をお願いします。\n【開催】ヤマカ木材 本社\n（岐阜市城東通2丁目44ー2）\n白い２階建ての建物\n【服装】スーツ\n【内容】社長面接\n【宿題】キャリアビジョンシート（最新版に更新し、前回同様ファイル登録情報からアップロードしておいてください）\n【持ち物】筆記用具、メモ帳、最新版のキャリアビジョンシート\n\nまた以前もお伝えしましたように、面接には逆質問の時間がございます。\nあらかじめ2、3個考えておいてください。\n\n－－－－－－－－－－－－－－－\n◣重要◥\\u3000 \n今回は《社長チャンネル》です！\n\n当社では、社長が自ら想いの共有や社員交流する場として、社内向けYouTubeを発信しています。\n\n社長の人柄や人勢戦略で意識していることなど知って頂けますので、ぜひ選考前にご覧ください！\n\n▼動画はこちら\nhttps://www.youtube.com/watch?v=AXA9LVnTLXM\n－－－－－－－－－－－－－－－\n\n当日は何で来るかな？\n車なら直接本社来てもらえれば駐車場あるし、電車ならJR岐阜駅まで迎えにいくので到着時間が分かり次第教えてください！\n名鉄の場合は茶所駅というところが最寄で、そこからは歩いて5分ほどで着くと思います！",
   rc1Mail:"先ほどは日程の調整ありがとうございました！\nご予約の案内をお送りしますので、ご確認よろしくお願いいたします。\n\n【イベント名】リクルーター面談\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n【内容】選考企業の整理、次回面接の準備\n【開催】zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019\n【服装】私服で大丈夫です\n【持ち物】筆記用具、メモ帳",
-  followMail:"ご予約いただいた次回イベントの案内をお送りしますので、ご確認よろしくお願いいたします。\n\n【イベント名】${noteDisplay}\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n【開催】${kaiSai}\n【服装】${fuku}\n【持ち物】筆記用具、メモ帳\n\nそれでは次回もよろしくお願いします！",
-  followRemind:"ご予約いただいたイベント日程が近づいてきましたので、再度案内をお送りします。\nご確認よろしくお願いします。\n\n【イベント名】${noteDisplay}\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n【開催】${kaiSai}\n【服装】${fuku}\n【持ち物】筆記用具、メモ帳\n\nこちら変わらず、参加は大丈夫でしょうか？"
+  followMail:"ご予約いただいた次回イベントの案内をお送りしますので、ご確認よろしくお願いいたします。\n\n【イベント名】${noteDisplay}\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n【開催】zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019\n【服装】私服で大丈夫です\n【持ち物】筆記用具、メモ帳\n\nそれでは次回もよろしくお願いします！",
+  followRemind:"ご予約いただいたイベント日程が近づいてきましたので、再度案内をお送りします。\nご確認よろしくお願いします。\n\n【イベント名】${noteDisplay}\n【日程】${dateStr}\n【時間】${ev.time}～${endTime}\n【開催】zoomで行います。5分ほど前にご入室ください。\nhttps://us06web.zoom.us/j/9191953466?pwd=T2t0VlJQaStkdXl6elBBQ3pOTlYyQT09\nミーティングID: 919 195 3466\nパスコード: 325019\n【服装】私服で大丈夫です\n【持ち物】筆記用具、メモ帳\n\nこちら変わらず、参加は大丈夫でしょうか？"
 }
 async function loadTmpl(){try{_TMPL=await _sbGet('templates')||{}}catch(e){};['internMail','internRemind','gwMail','gwRemind'].forEach(k=>{if(_TMPL[k]&&!_TMPL[k].includes('【開催】${kaiSai}')){_TMPL[k]=_TMPL[k].split('\n').map(l=>{const t=l.trim();return t==='${kaiSai}'?'【開催】${kaiSai}':t==='${fuku}'?'【服装】${fuku}':l}).join('\n')}});try{await _sbSet('templates',_TMPL)}catch(e){};renderTmplPanel()}
 function renderTmplPanel(){
@@ -1958,12 +1925,11 @@ function renderEvList(){
       '最終面接':{left:'#84cc16',bg:'#f7fee7',text:'#4d7c0f'},
       'フォローイベント':{left:'#f97316',bg:'#fff7ed',text:'#9a3412'},
     };
-    const _fkey=['フォローイベント','内定後フォロー','承諾後フォロー'];if(_fkey.some(k=>title.includes(k)))return map['フォローイベント']||{left:'#f97316',bg:'#fff7ed',text:'#9a3412'};return map[title]||{left:'#888',bg:'#f8f8f8',text:'#444'};
+    return map[title]||{left:'#888',bg:'#f8f8f8',text:'#444'};
   }
   function draw(){
     const todayStr=localDateStr()
     function buildEvCard(ev,isPastSection){
-      const _paxIds=new Set(ev.pax.map(p=>p.stuId));const _schLinked=STUDENTS.filter(s=>yrMatch(s)&&!_paxIds.has(s.id)&&s.sch&&s.sch.title===ev.title&&s.sch.date===ev.date&&s.sch.time===ev.time);if(_schLinked.length>0){_schLinked.forEach(s=>ev.pax.push({stuId:s.id,reg:'',attended:null,notified:false,reminded:false,result:null}));_dirtyEvents.add(ev.id);}
       const filteredPax=ev.pax.filter(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})
       if(filteredPax.length===0)return''
       const dt=fmtMDW(ev.date)
@@ -1986,33 +1952,29 @@ function renderEvList(){
       const dateBadgeStyle=isPastSection?'opacity:0.5':''
       const paxRows=filteredPax.map(p=>{
         const pi=ev.pax.indexOf(p)
-        const _eid=p._evId||ev.id;const _ppi=p._pi!=null?p._pi:pi;
         const stu=STUDENTS.find(s=>s.id===p.stuId)
         if(!stu)return''
-        const resultCell=hasResult?`<td><div style="display:flex;gap:4px"><button class="st-btn ${p.result==='pass'?'pass':''}" onclick="togglePaxStatus(${_eid},${_ppi},'result','pass',event)">通過</button><button class="st-btn ${p.result==='fail'?'fail':''}" onclick="togglePaxStatus(${_eid},${_ppi},'result','fail',event)">不合格</button></div></td>`:'';
-        return`<tr><td><div style="display:flex;gap:4px"><button class="st-btn ${p.attended==='yes'?'pass':''}" onclick="togglePaxStatus(${_eid},${_ppi},'attended','yes',event)">参加</button><button class="st-btn ${p.attended==='no'?'fail':''}" onclick="togglePaxStatus(${_eid},${_ppi},'attended','no',event)">不参加</button></div></td><td style="font-weight:500;white-space:nowrap">${stu.ln} ${stu.fn}<br><button style="font-size:9px;margin-top:2px;padding:0 5px;height:16px;border:1px solid #ddd;border-radius:3px;background:#fff;cursor:pointer;color:#555" onclick="event.stopPropagation();showStuOverlay(${stu.id})">詳細</button></td><td>${stu.gender}</td><td style="white-space:nowrap;text-align:center">${String(stu.yr).slice(-2)}卒</td><td style="white-space:nowrap">${stu.uni}<br><span style="font-size:10px;color:#999">${stu.fac}・${stu.dept}</span></td><td>${stu.phone}</td><td><span class="${mediaCls(stu.media)}">${stu.media}</span></td><td><button class="st-btn ${p.notified?'done':''}" onclick="togglePaxStatus(${_eid},${_ppi},'notified',true,event)">${p.notified?'✓ 送済':'未送'}</button></td><td><button class="st-btn ${p.reminded?'done':''}" onclick="togglePaxStatus(${_eid},${_ppi},'reminded',true,event)">${p.reminded?'✓ 送済':'未送'}</button></td>${resultCell}<td><button onclick="removePaxStu(${_eid},${p.stuId},event)" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:15px;line-height:1;padding:2px 4px" title="イベントから削除">×</button></td></tr>`
+        const resultCell=hasResult?`<td><div style="display:flex;gap:4px"><button class="st-btn ${p.result==='pass'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'result','pass',event)">通過</button><button class="st-btn ${p.result==='fail'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'result','fail',event)">不合格</button></div></td>`:'';
+        return`<tr><td><div style="display:flex;gap:4px"><button class="st-btn ${p.attended==='yes'?'pass':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','yes',event)">参加</button><button class="st-btn ${p.attended==='no'?'fail':''}" onclick="togglePaxStatus(${ev.id},${pi},'attended','no',event)">不参加</button></div></td><td style="font-weight:500;white-space:nowrap">${stu.ln} ${stu.fn}<br><button style="font-size:9px;margin-top:2px;padding:0 5px;height:16px;border:1px solid #ddd;border-radius:3px;background:#fff;cursor:pointer;color:#555" onclick="event.stopPropagation();showStuOverlay(${stu.id})">詳細</button></td><td>${stu.gender}</td><td style="white-space:nowrap;text-align:center">${String(stu.yr).slice(-2)}卒</td><td style="white-space:nowrap">${stu.uni}<br><span style="font-size:10px;color:#999">${stu.fac}・${stu.dept}</span></td><td>${stu.phone}</td><td><span class="${mediaCls(stu.media)}">${stu.media}</span></td><td><button class="st-btn ${p.notified?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'notified',true,event)">${p.notified?'✓ 送済':'未送'}</button></td><td><button class="st-btn ${p.reminded?'done':''}" onclick="togglePaxStatus(${ev.id},${pi},'reminded',true,event)">${p.reminded?'✓ 送済':'未送'}</button></td>${resultCell}<td><button onclick="removePaxStu(${ev.id},${p.stuId},event)" style="border:none;background:none;cursor:pointer;color:#ccc;font-size:15px;line-height:1;padding:2px 4px" title="イベントから削除">×</button></td></tr>`
       }).join('')
       const paxBody=filteredPax.length===0?'<div style="padding:12px;text-align:center;font-size:12px;color:#999">参加予定者なし</div>':`<table class="px-tbl"><thead><tr><th>参加</th><th>氏名</th><th>性別</th><th>卒年</th><th>大学・学部・学科</th><th>電話</th><th>媒体</th><th>案内</th><th>リマインド</th>${hasResult?'<th>合否</th>':''}</tr></thead><tbody>${paxRows}</tbody></table>`
       const expandedSection=selEvId===ev.id?`<div style="padding:0 12px 12px;overflow-x:auto" onclick="event.stopPropagation()">${paxBody}</div>`:''
       const _btnStyle=(color)=>`height:22px;padding:0 6px;font-size:10px;border:1px solid ${color};border-radius:4px;background:#fff;color:${color};cursor:pointer;white-space:nowrap`
       const _btn=(label,fn,color,evId)=>`<button onclick="${fn}(${evId},event)" style="${_btnStyle(color)}">📋 ${label}</button>`
       let gwMailBtn=''
-      if(ev.title==='グループワーク'){gwMailBtn=_btn('案内',"_gwUrlPop.bind(null,'copyGwMail')",'#a855f7',ev.id)+_btn('リマインド',"_gwUrlPop.bind(null,'copyGwRemindMail')",'#7c3aed',ev.id)}
+      if(ev.title==='グループワーク'){gwMailBtn=_btn('案内','copyGwMail','#a855f7',ev.id)+_btn('リマインド','copyGwRemindMail','#7c3aed',ev.id)}
       else if(ev.title==='インターンシップ'){gwMailBtn=_btn('案内','copyInternMail','#22c55e',ev.id)+_btn('リマインド','copyInternRemindMail','#16a34a',ev.id)}
       else if(ev.title==='RC面談①'){gwMailBtn=_btn('案内','copyRc1Mail','#3b82f6',ev.id)+_btn('リマインド','copyRc1RemindMail','#f59e0b',ev.id)}
       else if(ev.title==='最終面接'){gwMailBtn=_btn('案内','copyFinalInterviewMail','#ef4444',ev.id)+_btn('リマインド','copyFinalInterviewRemindMail','#b91c1c',ev.id)}
-      else if(ev.title==='フォローイベント'||ev.title==='内定後フォロー'||ev.title==='承諾後フォロー'||ev._merged){gwMailBtn=_btn('案内','copyFollowMail','#8b5cf6',ev.id)+_btn('リマインド','copyFollowRemindMail','#7c3aed',ev.id)}
-      const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="copyExecWeekRemind()" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}${ev.title.includes('役員面接')?`<button onclick="copyExecMail(${ev.id})" title="案内メールをコピー" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #9b59b6;border-radius:4px;background:#fff;color:#9b59b6;cursor:pointer;white-space:nowrap">案内</button>`:''}${ev.title.includes('役員面接')?`<button onclick="copyExecRemind(${ev.id})" title="リマインドをコピー" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e74c3c;border-radius:4px;background:#fff;color:#e74c3c;cursor:pointer;white-space:nowrap">リマインド</button>`:''}${gwMailBtn}<button title="イベントを削除" onclick="${ev._mergedIds?`deleteFollowGroup([${ev._mergedIds}],event)`:`deleteEvent(${ev.id},event)`}" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button></div>`
+      else if(ev.title==='フォローイベント'||ev.title==='内定後フォロー'||ev.title==='承諾後フォロー'){gwMailBtn=_btn('案内','copyFollowMail','#8b5cf6',ev.id)+_btn('リマインド','copyFollowRemindMail','#7c3aed',ev.id)}
+      const gcalBtns=`<div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()"><button title="編集" onclick="openEvModal(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #555;border-radius:4px;background:#fff;color:#555;cursor:pointer;white-space:nowrap">✏ 編集</button><button title="Googleカレンダーに追加" onclick="openGcalEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #4285f4;border-radius:4px;background:#fff;color:#4285f4;cursor:pointer;white-space:nowrap">📅 GCal</button>${ev.title.includes('役員面接')?`<button title="一週間前リマインダー" onclick="copyExecWeekRemind()" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e67e22;border-radius:4px;background:#fff;color:#e67e22;cursor:pointer;white-space:nowrap">⏰ 1週前</button>`:''}${ev.title.includes('役員面接')?`<button onclick="copyExecMail(${ev.id})" title="案内メールをコピー" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #9b59b6;border-radius:4px;background:#fff;color:#9b59b6;cursor:pointer;white-space:nowrap">案内</button>`:''}${ev.title.includes('役員面接')?`<button onclick="copyExecRemind(${ev.id})" title="リマインドをコピー" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #e74c3c;border-radius:4px;background:#fff;color:#e74c3c;cursor:pointer;white-space:nowrap">リマインド</button>`:''}${gwMailBtn}<button title="イベントを削除" onclick="deleteEvent(${ev.id},event)" style="height:22px;padding:0 6px;font-size:10px;border:1px solid #ccc;border-radius:4px;background:#fff;color:#999;cursor:pointer;white-space:nowrap">🗑</button></div>`
       const titleColor=isPastSection?'color:#999;':`color:${tc.text};`;
       const dotColor=isPastSection?'#bbb':tc.left;
       return`<div class="ev-card ${selEvId===ev.id?'on':''}" style="${alertStyle}${cardBg}"><div class="ev-card-hdr" onclick="toggleEvCard(${ev.id})"><div style="display:flex;align-items:center;gap:10px"><div class="date-badge" style="${dateBadgeStyle}"><div class="date-m">${dt.m}</div><div class="date-d">${dt.d}</div><div class="date-w">${dt.w}</div></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;${titleColor}"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:5px;vertical-align:middle;flex-shrink:0"></span>${ev.title}${alertBadge}</div><div style="display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap"><span style="font-size:9px;color:#bbb">${ev.time}</span><span style="font-size:9px;color:#bbb">${ev.loc==='WEB'?'WEB':ev.locDetail||ev.loc}</span><span style="font-size:9px;color:#bbb">${filteredPax.length}名</span>${ev.staff&&ev.staff.length?'<span style="font-size:9px;background:#f0f0f0;color:#555;border-radius:8px;padding:1px 6px">'+ev.staff.join('・')+'</span>':''}</div>${ev.note?'<div style="font-size:11px;color:#666;margin-top:3px;font-style:italic">'+ev.note+'</div>':''}</div>${gcalBtns}<i class="ti ti-chevron-${selEvId===ev.id?'up':'down'}" style="font-size:14px;color:#999;margin-left:6px"></i></div></div>${expandedSection}
 </div>`
     }
-    const FOLLOW_TYPES=['フォローイベント','内定後フォロー','承諾後フォロー'];
-    function mergeFollowEvs(evs){const mk=e=>`${e.date}|${e.time||''}|${e.note||''}`;const ord=FOLLOW_TYPES;const follows=evs.filter(e=>FOLLOW_TYPES.includes(e.title));const others=evs.filter(e=>!FOLLOW_TYPES.includes(e.title));const grps={};follows.forEach(e=>{const k=mk(e);(grps[k]=grps[k]||[]).push(e)});const merged=Object.values(grps).map(g=>{g.sort((a,b)=>ord.indexOf(a.title)-ord.indexOf(b.title));if(g.length===1)return g[0];const px=[];g.forEach(e=>e.pax.forEach((p,pi)=>{if(!px.some(q=>q.stuId===p.stuId))px.push({...p,_evId:e.id,_pi:pi})}));return{...g[0],title:g.map(e=>e.title).join('・'),pax:px,_merged:true,_mergedIds:g.map(e=>e.id)}});return[...others,...merged]}
-    const _displayEvs=mergeFollowEvs([...EVENTS]);
-    const upcoming=_displayEvs.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(a.date)-new Date(b.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+ah*60+ +am)-(+bh*60+ +bm)})
-    const past=_displayEvs.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(b.date)-new Date(a.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+bh*60+ +bm)-(+ah*60+ +am)})
+    const upcoming=EVENTS.filter(ev=>ev.date>=todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(a.date)-new Date(b.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+ah*60+ +am)-(+bh*60+ +bm)})
+    const past=EVENTS.filter(ev=>ev.date<todayStr&&ev.pax.some(p=>{const s=STUDENTS.find(x=>x.id===p.stuId);return s&&yrMatch(s)})).sort((a,b)=>{const d=new Date(b.date)-new Date(a.date);if(d)return d;const[ah,am]=(a.time||'0:0').split(':');const[bh,bm]=(b.time||'0:0').split(':');return(+bh*60+ +bm)-(+ah*60+ +am)})
     const showPast=window._evPastExp?past:past.slice(0,MAX_PAST)
     const upHtml=upcoming.map(ev=>buildEvCard(ev,false)).join('')
     const pastHtml=showPast.map(ev=>buildEvCard(ev,true)).join('')
@@ -2543,6 +2505,12 @@ async function impProcess(file){
       const rows=impParseCsv(text)
       if(rows.length){impResults=rows;impShowPreview(impResults)}
       else impShowError('マイナビ CSV のフォーマットを認識できませんでした。')
+    } else if(impSrc==='spona'){
+      const ab=await file.arrayBuffer()
+      const text=new TextDecoder('shift-jis').decode(ab)
+      const rows=impParseSpona(text)
+      if(rows&&rows.length){impResults=rows;impShowPreview(impResults)}
+      else impShowError('スポナビ CSV のフォーマットを認識できませんでした。')
     } else if(impSrc==='sheet'){
       const rows=await impParseSheet(file)
       if(rows&&rows.length){impResults=rows;impShowPreview(impResults)}
@@ -2641,6 +2609,33 @@ function impParseCsv(text){
     const yrRaw=g('yr');const yr=parseInt(yrRaw)
     return{ln:g('ln'),fn:g('fn'),lk:g('lk'),fk:g('fk'),uni:g('uni'),fac:g('fac'),dept:g('dept'),gender:g('gender'),home:g('home'),city:'',phone:g('phone')||'—',email:g('email'),yr:isNaN(yr)?null:yr,media:'マイナビ'}
   }).filter(r=>r.ln&&r.uni&&r.yr)
+}
+
+function impParseSpona(text){
+  // スポナビCSV: SHIFT_JIS デコード済みテキストをパース
+  const lines=text.split(/?
+/).filter(l=>l.trim())
+  if(lines.length<2)return[]
+  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim())
+  const MAP={
+    ln:['姓'],fn:['名'],lk:['セイ'],fk:['メイ'],
+    phone:['電話番号'],email:['メールアドレス'],
+    home:['現住所都道府県'],addr:['現住所'],city:['希望勤務地'],
+    uni:['大学名'],fac:['学部'],dept:['学科'],
+    yr:['卒業年度'],media:['エントリー元'],stage:['選考ステップ'],note:['備考']
+  }
+  const idx={}
+  Object.entries(MAP).forEach(([k,aliases])=>{for(const a of aliases){const i=headers.indexOf(a);if(i>=0){idx[k]=i;break}}})
+  const VALID_STAGES=['エントリー','個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','承諾待ち','内定承諾','内定辞退','不合格','辞退']
+  const STAGE_ALIAS={'インターン':'インターンシップ','intern':'インターンシップ','GW':'グループワーク','gw':'グループワーク','rc1':'RC面談①','rc2':'RC面談②','最終':'最終面接','内定':'内定承諾','承諾':'内定承諾','辞':'辞退','落':'不合格'}
+  function normSt(raw){if(!raw)return'エントリー';const s=String(raw).trim();if(VALID_STAGES.includes(s))return s;if(STAGE_ALIAS[s])return STAGE_ALIAS[s];const found=VALID_STAGES.find(v=>s.includes(v)||v.includes(s));return found||'エントリー'}
+  return lines.slice(1).map(line=>{
+    const cols=line.split(',').map(c=>c.replace(/^"|"$/g,'').trim())
+    const g=k=>idx[k]!=null?cols[idx[k]]||'':''
+    const yrRaw=g('yr');const yr=parseInt(yrRaw)
+    const rawMedia=g('media')
+    return{ln:g('ln'),fn:g('fn'),lk:g('lk'),fk:g('fk'),uni:g('uni'),fac:g('fac'),dept:g('dept'),gender:'',home:g('home'),addr:g('addr'),city:g('city'),phone:g('phone')||'—',email:g('email'),yr:isNaN(yr)?null:yr,media:rawMedia||'スポナビ',stage:normSt(g('stage')),note:g('note')}
+  }).filter(r=>r.ln||r.uni||r.yr)
 }
 
 function impParseCareerTicket(text){
