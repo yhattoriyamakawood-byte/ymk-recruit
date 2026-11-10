@@ -1177,7 +1177,7 @@ function getStudentNextEv(stuId){const _n=new Date();return EVENTS.filter(e=>e.p
     if(!yrMatch(s))return
     if(!s.sch?.date||!s.sch?.title)return
     if(!PIPE_STAGES.includes(s.sch.title))return
-    const _sk=a=>[...(a||[])].sort().join('|');const _inEv=EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&e.pax.some(p=>p.stuId===s.id));let ev=_inEv||EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&_sk(e.staff)===_sk(s.sch.staff))
+    const _sk=a=>[...(a||[])].sort().join('|');const _inEv=EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.pax.some(p=>p.stuId===s.id));let ev=_inEv||EVENTS.find(e=>e.title===s.sch.title&&e.date===s.sch.date&&e.time===s.sch.time&&_sk(e.staff)===_sk(s.sch.staff))
     if(!ev){
       const typeMap={'個別面談':'面談','インターンシップ':'インターン','グループワーク':'面談','RC面談①':'面談','役員面接':'面談','RC面談②':'面談','最終面接':'面談','フォローイベント':'懇親会'}
       ev={id:nextId(EVENTS),title:s.sch.title,type:typeMap[s.sch.title]||'面談',date:s.sch.date,time:s.sch.time,loc:s.sch.loc||'WEB',locDetail:s.sch.locDetail||'',staff:s.sch.staff||[],pax:[],_synced:true}
@@ -1628,7 +1628,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       toast(`${stu.ln} ${stu.fn} → 不合格`)
     }
   }
-  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}else{_stu.sch=null;_stu.scheduling=false}}}
+  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
