@@ -1214,7 +1214,7 @@ function dedupEvents(){
     }
   })
   // Pass 2: フォロー系イベントをメモ（イベント名）+日付でまとめる。メモなしは日付+時刻でまとめる
-  const FOLLOW_ORD=['内定後フォロー','承諾後フォロー','フォローイベント']
+  const FOLLOW_ORD=['内定後フォロー','承諾後フォロー']
   const isFollow=t=>t.split('・').some(p=>FOLLOW_ORD.includes(p))
   const followMap={}
   EVENTS.filter(ev=>!_deletedEventIds.has(ev.id)&&isFollow(ev.title)).forEach(ev=>{
