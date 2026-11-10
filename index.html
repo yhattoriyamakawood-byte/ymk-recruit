@@ -1213,14 +1213,14 @@ function dedupEvents(){
       }
     }
   })
-  // Pass 2: 同じ日付のフォロー系イベントをタイトル「・」結合で1つにまとめる（時刻は問わない）
+  // Pass 2: フォロー系イベントをメモ（イベント名）+日付でまとめる。メモなしは日付+時刻でまとめる
   const FOLLOW_ORD=['内定後フォロー','承諾後フォロー','フォローイベント']
   const isFollow=t=>t.split('・').some(p=>FOLLOW_ORD.includes(p))
-  const dateMap={}
+  const followMap={}
   EVENTS.filter(ev=>!_deletedEventIds.has(ev.id)&&isFollow(ev.title)).forEach(ev=>{
-    const k=ev.date;if(!dateMap[k])dateMap[k]=[];dateMap[k].push(ev)
+    const k=ev.date+'|'+(ev.note||ev.time||'');if(!followMap[k])followMap[k]=[];followMap[k].push(ev)
   })
-  Object.values(dateMap).forEach(fEvs=>{
+  Object.values(followMap).forEach(fEvs=>{
     if(fEvs.length<2)return
     const primary=fEvs[0]
     for(let i=1;i<fEvs.length;i++){
