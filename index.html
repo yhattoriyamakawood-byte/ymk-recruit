@@ -1213,15 +1213,14 @@ function dedupEvents(){
       }
     }
   })
-  // Pass 2: 同じ日時のフォロー系イベントをタイトル「・」結合で1つにまとめる
+  // Pass 2: 同じ日付のフォロー系イベントをタイトル「・」結合で1つにまとめる（時刻は問わない）
   const FOLLOW_ORD=['内定後フォロー','承諾後フォロー','フォローイベント']
   const isFollow=t=>t.split('・').some(p=>FOLLOW_ORD.includes(p))
-  const timeMap={}
-  EVENTS.filter(ev=>!_deletedEventIds.has(ev.id)).forEach(ev=>{
-    const k=ev.date+'|'+(ev.time||'');if(!timeMap[k])timeMap[k]=[];timeMap[k].push(ev)
+  const dateMap={}
+  EVENTS.filter(ev=>!_deletedEventIds.has(ev.id)&&isFollow(ev.title)).forEach(ev=>{
+    const k=ev.date;if(!dateMap[k])dateMap[k]=[];dateMap[k].push(ev)
   })
-  Object.values(timeMap).forEach(evs=>{
-    const fEvs=evs.filter(ev=>isFollow(ev.title))
+  Object.values(dateMap).forEach(fEvs=>{
     if(fEvs.length<2)return
     const primary=fEvs[0]
     for(let i=1;i<fEvs.length;i++){
@@ -1638,6 +1637,7 @@ function renderKB(){
         const EXIT_STAGES=['辞退','不合格','内定辞退','承諾待ち']
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
         if(PIPE_EV.includes(ns)){stu.scheduling=true;stu.sch=null}
+        stu._updatedAt=Date.now();_saveSingleStudent(stu.id);scheduleSave()
         pushUndo()
         refreshAll()
         toast(`${stu.ln} ${stu.fn} → 「${ns}」`)
@@ -1709,6 +1709,7 @@ function declineStu(id,e){
   s.stage='辞退'
   s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:'辞退',cur:true})
   s.sch=null;s.scheduling=false
+  s._updatedAt=Date.now();_saveSingleStudent(s.id)
   if(selPipeId===id){selPipeId=null;document.getElementById('pipe-dp').classList.add('hide')}
   refreshAll()
   toast(`${s.ln} ${s.fn} → 「辞退」`)
