@@ -632,7 +632,10 @@ async function _authSubmit(){
       initSession()
       document.getElementById('ov-auth').style.display='none'
       syncPipelineEvents();buildYrDD();buildMediaDDs();buildStaffDD()
-      STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});if(_dirtyStu.size>0)scheduleSave()
+      STUDENTS.forEach(stu=>{const _sn=getStudentNextEv(stu.id);if(_sn&&stu.sch?.date&&new Date(_sn.date+'T'+(_sn.time||'00:00'))<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:_sn.title,date:_sn.date,time:_sn.time,loc:_sn.loc||(stu.sch?.loc||''),locDetail:_sn.locDetail||'',evId:_sn.id,staff:stu.sch.staff||[],note:stu.sch.note||''};_dirtyStu.add(stu.id)}});
+      // paxにいるのにschがnullの学生を自動補完
+      const _today=localDateStr();EVENTS.filter(ev=>ev.date>=_today).forEach(ev=>{ev.pax.forEach(px=>{const _stu=STUDENTS.find(x=>x.id===px.stuId);if(!_stu||_stu.sch)return;_stu.sch={title:ev.title,date:ev.date,time:ev.time||'',loc:ev.loc||'',locDetail:ev.locDetail||'',evId:ev.id,staff:ev.staff||[],note:ev.note||''};_stu.scheduling=false;_dirtyStu.add(_stu.id)})});
+      if(_dirtyStu.size>0)scheduleSave()
       renderDash();renderStu();renderKB();renderAnal();renderFaze();updateEvTabBadge()
       _setSaveInd('接続済み','#22c55e')
     }else{
