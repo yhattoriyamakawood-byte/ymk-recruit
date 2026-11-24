@@ -1163,7 +1163,7 @@ function saveSchedule(){
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
   const newStageVal=mappedStage||(SCH_STAGE_MAP[title])
-  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;s.hist.forEach(h=>delete h.cur);s.hist.push({d:todayMD(),s:newStageVal,cur:true})}
+  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=(_prevEvId?EVENTS.find(ev=>ev.id===_prevEvId&&ev.date===date&&ev.time===time):null)||EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
@@ -1638,7 +1638,7 @@ function renderKB(){
         const ns=KBS[ev.currentTarget.dataset.colId||col.id]
         pushUndo()
         stu.stage=ns
-        stu.hist.forEach(h=>delete h.cur);stu.hist.push({d:todayMD(),s:ns,cur:true})
+        
         const PIPE_EV=['個別面談','インターンシップ','インターン','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
         const EXIT_STAGES=['辞退','不合格','内定辞退','承諾待ち']
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
