@@ -1617,7 +1617,7 @@ function renderKB(){
         card.addEventListener('dragend',()=>{
           card.classList.remove('dragging')
           document.querySelectorAll('.kb-col').forEach(x=>x.classList.remove('dov'))
-          dragCard=null
+          setTimeout(()=>dragCard=null,0)
         })
         cardsEl.appendChild(card)
       })
@@ -1644,7 +1644,6 @@ function renderKB(){
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
         if(PIPE_EV.includes(ns)){stu.scheduling=true;stu.sch=null}
         stu._updatedAt=Date.now();_saveSingleStudent(stu.id);scheduleSave()
-        pushUndo()
         refreshAll()
         toast(`${stu.ln} ${stu.fn} → 「${ns}」`)
       })
