@@ -1163,7 +1163,7 @@ function saveSchedule(){
   const SCH_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','内定承諾面談':'承諾待ち','フォローイベント':'フォローイベント','辞退':'辞退','不合格':'不合格'}
   const mappedStage=SCH_STAGE_MAP[title]||S2KB[title]?KBS[S2KB[title]]:null
   const newStageVal=mappedStage||(SCH_STAGE_MAP[title])
-  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal;}
+  if(newStageVal&&newStageVal!==s.stage&&S2KB[newStageVal]){s.stage=newStageVal}
   const EV_TITLES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント','会社説明会']
   if(EV_TITLES.includes(title)||(!['エントリー','承諾待ち','内定承諾','内定辞退','内定承諾面談','辞退','不合格'].includes(title)&&title)){
     const _sk2=a=>[...(a||[])].sort().join('|');const _staff=s.sch?.staff||[];const matchEv=(_prevEvId?EVENTS.find(ev=>ev.id===_prevEvId&&ev.date===date&&ev.time===time):null)||EVENTS.find(ev=>ev.title===title&&ev.date===date&&ev.time===time&&(ev.locDetail||'')===(locDetail||''))
@@ -1171,12 +1171,29 @@ function saveSchedule(){
     if(matchEv){if(!matchEv.pax.find(p=>p.stuId===s.id)){matchEv.pax.push({stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null})};if(_staff.length>0)matchEv.staff=_staff;if(s.sch&&!_keepSch)s.sch.evId=matchEv.id;matchEv.locDetail=locDetail;if(_schNote)matchEv.note=_schNote;matchEv.loc=schLocType;matchEv.date=date;matchEv.time=time;_dirtyEvents.add(matchEv.id)}
     else{const _nev={id:nextId(EVENTS),title,type:'面談',date,time,loc:schLocType,locDetail,staff:_staff,note:_schNote,pax:[{stuId:s.id,reg:todayMD(),attended:false,notified:false,reminded:false,result:null}]};EVENTS.push(_nev);_dirtyEvents.add(_nev.id);if(s.sch&&!_keepSch)s.sch.evId=_nev.id}
   }
-  const _sNext=getStudentNextEv(s.id);if(_sNext&&(!isSchFlag)&&s.sch?.date&&new Date(_sNext.date+'T'+(_sNext.time||'00:00'))<new Date(s.sch.date+'T'+(s.sch.time||'00:00'))){s.sch={title:_sNext.title,date:_sNext.date,time:_sNext.time,loc:_sNext.loc||(s.sch?.loc||''),locDetail:_sNext.locDetail||'',evId:_sNext.id,staff:s.sch.staff||[],note:s.sch.note||''}};_saveSingleStudent(schStuId);_mergeAndSaveEvents();toast('日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)
+  const _sNext=getStudentNextEv(s.id);if(_sNext&&(!isSchFlag)&&s.sch?.date&&new Date(_sNext.date+'T'+(_sNext.time||'00:00'))<new Date(s.sch.date+'T'+(s.sch.time||'00:00'))){s.sch={title:_sNext.title,date:_sNext.date,time:_sNext.time,loc:_sNext.loc||(s.sch?.loc||''),locDetail:_sNext.locDetail||'',evId:_sNext.id,staff:s.sch.staff||[],note:s.sch.note||''}};const _wasHistAdd=_histAddMode;if(_histAddMode){autoUpdateStage(s);_histAddMode=false};_saveSingleStudent(schStuId);_mergeAndSaveEvents();toast(_wasHistAdd?'イベントを追加しました':'日程を設定しました');closeModal('ov-schedule');syncPipelineEvents();const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)
 }
 function clearSchedule(){pushUndo();const s=STUDENTS.find(x=>x.id===schStuId);if(!s)return;s.sch=null;s.scheduling=false;closeModal('ov-schedule');syncPipelineEvents();toast('日程をクリアしました');const cur=getCur();if(cur==='pipe')renderKB();if(cur==='stud')renderStu();if(cur==='dash')renderDash();if(cur==='evnt')if(selId===schStuId)selStu(schStuId,true)}
 
 function go(scr,el){document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));if(el)el.classList.add('on');document.querySelectorAll('.sc').forEach(s=>s.classList.remove('on'));document.getElementById('sc-'+scr).classList.add('on');document.getElementById('hdr-t').textContent={dash:'ダッシュボード',pipe:'選考ステップ',stud:'学生名簿',evnt:'イベント一覧',faze:'選考分析',anal:'媒体分析'}[scr];if(scr==='stud')renderStu();if(scr==='pipe')renderKB();if(scr==='dash')renderDash();if(scr==='anal')renderAnal();if(scr==='evnt')renderEvList();if(scr==='faze')renderFaze()}
-function getStudentNextEv(stuId){const _n=new Date();return EVENTS.filter(e=>e.pax.some(p=>p.stuId===stuId)&&new Date(e.date+'T'+(e.time||'00:00'))>=_n).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0]||null}function syncPipelineEvents(){
+function getStudentNextEv(stuId){const _n=new Date();return EVENTS.filter(e=>e.pax.some(p=>p.stuId===stuId)&&new Date(e.date+'T'+(e.time||'00:00'))>=_n).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0]||null}
+function autoUpdateStage(stu){
+  const EXIT=['辞退','不合格','内定辞退'];if(EXIT.includes(stu.stage))return
+  const nextEv=getStudentNextEv(stu.id);if(!nextEv)return
+  const PIPE_STAGE_MAP={'個別面談':'個別面談','インターンシップ':'インターンシップ','グループワーク':'グループワーク','RC面談①':'RC面談①','役員面接':'役員面接','RC面談②':'RC面談②','最終面接':'最終面接','フォローイベント':'フォローイベント','会社説明会':'グループワーク'}
+  const ns=PIPE_STAGE_MAP[nextEv.title]||(S2KB[nextEv.title]?KBS[S2KB[nextEv.title]]:null)
+  if(ns&&ns!==stu.stage)stu.stage=ns
+  const _nextDt=new Date(nextEv.date+'T'+(nextEv.time||'00:00'))
+  if(!stu.sch?.date||_nextDt<new Date(stu.sch.date+'T'+(stu.sch.time||'00:00'))){stu.sch={title:nextEv.title,date:nextEv.date,time:nextEv.time,loc:nextEv.loc||'WEB',locDetail:nextEv.locDetail||'',evId:nextEv.id,staff:nextEv.staff||[],note:stu.sch?.note||''};stu.scheduling=false}
+}
+let _histAddMode=false
+function openHistAddModal(stuId,e){
+  _histAddMode=true;const s=STUDENTS.find(x=>x.id===stuId)
+  const _origSch=s.sch;s.sch=null
+  openScheduleModal(stuId,e)
+  s.sch=_origSch
+}
+function syncPipelineEvents(){
   const PIPE_STAGES=['個別面談','インターンシップ','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
   // イベントは削除しない — スケジュールデータから不足分だけ追加する
   STUDENTS.forEach(s=>{
@@ -1468,7 +1485,7 @@ function selStu(id,refresh){
   <div class="dp-sec"><div class="dp-st blue">基本情報</div><div class="dp-row"><div class="dp-lbl">フリガナ</div><div>${s.lk} ${s.fk}</div></div><div class="dp-row"><div class="dp-lbl">大学</div><div>${s.uni}</div></div><div class="dp-row"><div class="dp-lbl">学部・学科</div><div>${s.fac}・${s.dept}</div></div><div class="dp-row"><div class="dp-lbl">卒業年度</div><div>${s.yr}年卒</div></div><div class="dp-row"><div class="dp-lbl">流入媒体</div><div>${s.media||'—'}</div></div><div class="dp-row"><div class="dp-lbl">性別</div><div>${s.gender||'—'}</div></div><div class="dp-row"><div class="dp-lbl">誕生日</div><div>${s.bday?(s.bday.length===10?s.bday.slice(5).replace('-','/'):s.bday):'—'}</div></div><div class="dp-row"><div class="dp-lbl">エントリー日</div><div>${s.entryDate||s.lc||'—'}</div></div><div class="dp-row"><div class="dp-lbl">最終連絡日</div><input type="date" value="${s.lc||''}" onchange="dpLcUpdate(${s.id},this.value)" style="font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:3px;background:#fafafa;color:#333"></div><div class="dp-row"><div class="dp-lbl">住所</div><div><div>${s.home}${s.city?' '+s.city:''}</div><div style="font-size:11px;color:#555;margin-top:2px">${s.addr||''}</div></div></div>${s.homeR?`<div class="dp-row"><div class="dp-lbl">帰省先</div><div><div>${s.homeR}${s.cityR?' '+s.cityR:''}</div><div style="font-size:11px;color:#555;margin-top:2px">${s.addrR||''}</div></div></div>`:''}<div class="dp-row"><div class="dp-lbl">メール</div><div style="font-size:11px;color:#666;word-break:break-all">${s.email}</div></div><div class="dp-row"><div class="dp-lbl">電話</div><div>${s.phone}</div></div></div>
   <div class="dp-sec"><div class="dp-st orange">志望職種</div><div style="display:flex;flex-wrap:wrap;gap:3px">${(s.jobTags||[]).map(t=>`<span class="tag-p" style="background:#e6f1fb;color:#0c447c;border-color:#b5d4f4">${t}</span>`).join('')||'<span style="font-size:11px;color:#ccc">未設定</span>'}</div></div>
   <div class="dp-sec"><div class="dp-st red">メモ</div><textarea onblur="dpMemoUpdate(${s.id},this.value)" style="width:100%;box-sizing:border-box;font-size:12px;padding:5px 7px;border:1px solid #ddd;border-radius:4px;resize:vertical;background:#fafafa;min-height:60px;font-family:inherit">${s.memo||''}</textarea></div>
-  <div class="dp-sec"><div class="dp-st blue">選考履歴</div><div style="padding-left:10px">${(()=>{
+  <div class="dp-sec"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div class="dp-st blue" style="margin-bottom:0">選考履歴</div><button onclick="openHistAddModal(${s.id},event)" style="font-size:11px;padding:2px 8px;border:1px solid #4a90d9;border-radius:3px;background:#e8f1fc;color:#4a90d9;cursor:pointer;white-space:nowrap">＋ イベント追加</button></div><div style="padding-left:10px">${(()=>{
     const evHist=EVENTS.flatMap(ev=>{const px=ev.pax.find(p=>p.stuId===s.id);if(!px)return[];const _parts=ev.title.split('・');const _schT=s.sch?.evId==ev.id&&_parts.includes(s.sch?.title)?s.sch.title:null;const _dispTitle=_parts.find(p=>p===s.stage)||_schT||ev.title;return[{d:(ev.date||'').slice(5,10).replace('-','/')||'—',s:_dispTitle,staff:ev.staff||[],loc:ev.locDetail||'',note:ev.note||'',ev:true,scheduled:px.attended!=='yes',ds:ev.date||'',ts:ev.time||'00:00'}]}).sort((a,b)=>{if(!a.ds&&!b.ds)return 0;if(!a.ds)return 1;if(!b.ds)return -1;const ka=a.ds+'T'+a.ts,kb=b.ds+'T'+b.ts;return ka<kb?-1:ka>kb?1:0});
     const firstEntry=(s.hist||[]).find(h=>h.s==='エントリー');const entryHist=firstEntry?[firstEntry]:[];
     const all=[...entryHist.map(h=>`<div class="tl-item"><div class="tl-d">${h.d}</div><div class="tl-s">${h.s}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div>`),...evHist.map(h=>`<div class="tl-item" style="border-left-color:${h.scheduled?'#f39c12':'#4a90d9'}"><div class="tl-d">${h.d}<div class="tl-s" style="color:${h.scheduled?'#d35400':'#1a5fa8'}">${h.s}${h.scheduled?'<span style="font-size:9px;background:#f39c12;color:#fff;border-radius:3px;padding:1px 4px;margin-left:4px">予定</span>':''}</div>${h.staff&&h.staff.length?'<div style="font-size:10px;color:#888;margin-top:2px">参加: '+h.staff.join('・')+'</div>':''}${h.loc?'<div style="font-size:10px;color:#888">'+h.loc+'</div>':''}${h.note?'<div style="font-size:10px;color:#555;margin-top:2px;font-style:italic">'+h.note+'</div>':''}</div></div>`)];
@@ -1638,7 +1655,6 @@ function renderKB(){
         const ns=KBS[ev.currentTarget.dataset.colId||col.id]
         pushUndo()
         stu.stage=ns
-        
         const PIPE_EV=['個別面談','インターンシップ','インターン','グループワーク','RC面談①','役員面接','RC面談②','最終面接','フォローイベント']
         const EXIT_STAGES=['辞退','不合格','内定辞退','承諾待ち']
         if(EXIT_STAGES.includes(ns)){stu.sch=null;stu.scheduling=false}
@@ -1687,7 +1703,7 @@ function togglePaxStatus(evId,pi,field,val,e){
       stu._updatedAt=Date.now();_saveSingleStudent(stu.id)
     }
   }
-  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu&&_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}}}
+  if(field==='attended'&&ev.pax[pi].attended!==null){const _stu=STUDENTS.find(s=>s.id===ev.pax[pi].stuId);if(_stu){if(_stu.sch?.evId===evId){const _now=new Date();const _nextEv=EVENTS.filter(e=>e.id!==evId&&e.pax.some(p=>p.stuId===_stu.id)&&new Date(e.date+'T'+(e.time||'00:00'))>_now).sort((a,b)=>new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00')))[0];if(_nextEv){_stu.sch={title:_nextEv.title,date:_nextEv.date,time:_nextEv.time,loc:_nextEv.loc,locDetail:_nextEv.locDetail,evId:_nextEv.id,staff:_nextEv.staff};_stu.scheduling=false}};autoUpdateStage(_stu);_stu._updatedAt=Date.now();_saveSingleStudent(_stu.id)}}
   const _sv=selEvId,_sp=window._evPastExp;scheduleSave();if(window._evListDraw)window._evListDraw();if(selEvId!==_sv||window._evPastExp!==_sp){selEvId=_sv;window._evPastExp=_sp;renderEvList()}renderDash();if(getCur()==='stud'&&selId)selStu(selId,true)
   if(getCur()==='pipe')renderKB()
 }
